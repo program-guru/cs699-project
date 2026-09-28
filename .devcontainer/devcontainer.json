@@ -26,13 +26,9 @@
         "vscode-icons-team.vscode-icons"
       ],
       "settings": {
-        "editor.formatOnSave": true,
-        "python.defaultInterpreterPath": "/usr/bin/python3",
-        "[python]": {
-          "editor.defaultFormatter": "ms-python.black-formatter"
-        }
+        "editor.formatOnSave": true
       }
     }
   },
-  "remoteUser": "vscode"
+  "remoteUser": "node"
 }
