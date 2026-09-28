@@ -1,0 +1,37 @@
+services:
+  app:
+    container_name: uniscope-app
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ..:/workspaces:cached
+    command: sleep infinity
+    depends_on:
+      - mongo
+    environment:
+      MONGO_HOST: mongo
+      MONGO_PORT: 27017
+      MONGO_DB: uniscope
+      MONGO_URI: mongodb://mongo:27017/uniscope
+    networks:
+      - uniscope-network
+
+  mongo:
+    image: mongo:7.0
+    container_name: uniscope-mongo
+    hostname: mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - uniscope-network
+
+networks:
+  uniscope-network:
+    driver: bridge
+
+volumes:
+  mongo-data:

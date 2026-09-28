@@ -1,0 +1,35 @@
+# --- Web framework ---
+fastapi==0.117.1
+uvicorn[standard]==0.32.0
+pydantic==2.11.9
+pydantic-settings==2.6.1
+
+# --- Database (MongoDB) ---
+motor==3.6.0             # async MongoDB driver, pairs naturally with FastAPI
+pymongo==4.9.2
+
+# --- Scraping ---
+beautifulsoup4==4.12.3
+lxml==5.3.0
+requests==2.32.3
+playwright==1.48.0        # fallback for JS-rendered course pages
+
+# --- Scheduling ---
+apscheduler==3.10.4
+
+# --- Auth (admin login) ---
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# --- LLM integration ---
+anthropic==0.39.0
+
+# --- Utilities ---
+python-dotenv==1.0.1
+httpx==0.28.1
+tenacity==9.0.0            # retry/backoff for scraper HTTP calls
+
+# --- Testing ---
+pytest==8.3.3
+pytest-asyncio==0.24.0
+pytest-mock==3.14.0

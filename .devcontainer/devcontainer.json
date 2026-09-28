@@ -1,0 +1,38 @@
+{
+  "name": "Uni Scope",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces",
+  "postCreateCommand": "bash ./scripts/post-create.sh",
+  "forwardPorts": [3000, 8000, 27017],
+  "portsAttributes": {
+    "3000": { "label": "Next.js Frontend" },
+    "8000": { "label": "FastAPI Backend" },
+    "27017": { "label": "MongoDB" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss",
+        "dsznajder.es7-react-js-snippets",
+        "formulahendry.auto-rename-tag",
+        "mongodb.mongodb-vscode",
+        "humao.rest-client",
+        "vscode-icons-team.vscode-icons"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "python.defaultInterpreterPath": "/usr/bin/python3",
+        "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter"
+        }
+      }
+    }
+  },
+  "remoteUser": "vscode"
+}
