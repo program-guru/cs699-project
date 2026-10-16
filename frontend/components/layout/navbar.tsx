@@ -1,23 +1,28 @@
-import Link from "next/link"
-import { GraduationCap, LayoutDashboard } from "lucide-react"
+import Link from "next/link";
+import { GraduationCap, LayoutDashboard, Menu } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { ModeToggle } from "@/components/ui/mode-toggle"
+import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ModeToggle } from "@/components/ui/mode-toggle";
 
 const navigationItems = [
   { href: "/", label: "Home" },
   { href: "/colleges", label: "Colleges" },
   { href: "/compare", label: "Compare" },
-]
+];
 
 export function Navbar() {
   return (
     <header className="border-b bg-background">
-      <nav
-        aria-label="Main navigation"
-        className="mx-auto flex w-full items-center justify-between px-4 py-3 sm:px-6 lg:px-8"
-      >
-        <div className="flex items-center gap-6">
+      <Collapsible>
+        <nav
+          aria-label="Main navigation"
+          className="mx-auto flex w-full items-center justify-between px-4 py-3 sm:px-6 lg:px-8"
+        >
           <Link
             href="/"
             aria-label="UniScope home"
@@ -27,32 +32,76 @@ export function Navbar() {
             <span>UniScope</span>
           </Link>
 
-          {navigationItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          <div className="hidden items-center gap-6 md:flex">
+            {navigationItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="hidden items-center gap-4 md:flex">
+            <ModeToggle />
+
+            <Button
+              aria-label="Go to admin panel"
+              nativeButton={false}
+              render={<Link href="/admin" />}
+              size="icon"
+              title="Admin panel"
+              variant="outline"
             >
-              {item.label}
-            </Link>
-          ))}
-        </div>
+              <LayoutDashboard aria-hidden="true" />
+            </Button>
+          </div>
 
-        <div className="flex items-center gap-4">
-          <ModeToggle />
-
-          <Button
-            aria-label="Go to admin panel"
-            nativeButton={false}
-            render={<Link href="/admin" />}
-            size="icon"
-            title="Admin panel"
-            variant="outline"
+          <CollapsibleTrigger
+            render={
+              <Button
+                aria-label="Toggle navigation menu"
+                className="md:hidden"
+                size="icon"
+                variant="outline"
+              />
+            }
           >
-            <LayoutDashboard aria-hidden="true" />
-          </Button>
-        </div>
-      </nav>
+            <Menu aria-hidden="true" />
+          </CollapsibleTrigger>
+        </nav>
+
+        <CollapsibleContent className="border-t px-4 py-4 md:hidden sm:px-6">
+          <div className="flex flex-col gap-4">
+            {navigationItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {item.label}
+              </Link>
+            ))}
+
+            <div className="flex items-center gap-4">
+              <ModeToggle />
+
+              <Button
+                aria-label="Go to admin panel"
+                nativeButton={false}
+                render={<Link href="/admin" />}
+                size="icon"
+                title="Admin panel"
+                variant="outline"
+              >
+                <LayoutDashboard aria-hidden="true" />
+              </Button>
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </header>
-  )
+  );
 }
