@@ -1,0 +1,26 @@
+
+sources:
+  - college_id: iitm
+    college_name: IIT Madras
+    department_id: cse
+    department_name: Computer Science and Engineering
+    scraper_class: scrapers.strategies.iitm_cse_scraper.IITMCSEScraper
+    base_url: https://www.cse.iitm.ac.in/courses.php
+    active: true
+
+  - college_id: iitb
+    college_name: IIT Bombay
+    department_id: cse
+    department_name: Computer Science and Engineering
+    scraper_class: scrapers.strategies.iitb_cse_scraper.IITBCSEScraper
+    base_url: https://www.cse.iitb.ac.in/academics/courses
+    active: false
+
+  - college_id: iitd
+    college_name: IIT Delhi
+    department_id: cse
+    department_name: Computer Science and Engineering
+    scraper_class: scrapers.strategies.iitd_cse_scraper.IITDCSEScraper
+    base_url: https://homecse.iitd.ac.in/all-courses/
+    active: false
+
