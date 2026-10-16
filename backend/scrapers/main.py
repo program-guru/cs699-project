@@ -7,8 +7,8 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 from pydantic import TypeAdapter
 
-from models import Course
-from registry import registry
+from scrapers.models import Course
+from scrapers.registry import registry
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,7 +24,7 @@ def main():
     )
     args = parser.parse_args()
 
-    college_id = "iitm"
+    college_id = "iitb"
     department_id = "cse"
     # college_id = "iitb"
     # department_id = "cse"

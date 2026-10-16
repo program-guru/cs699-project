@@ -2,7 +2,7 @@
 from typing import Any
 
 from bs4 import BeautifulSoup
-from base_scrapper import BaseCourseScraper
+from scrapers.base_scrapper import BaseCourseScraper
 
 
 class IITBCSEScraper(BaseCourseScraper):

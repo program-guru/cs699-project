@@ -1,7 +1,6 @@
-
-from base_scrapper import BaseCourseScraper
-from strategies.iitm_cse_scraper import IITMCSEScraper
-from strategies.iitb_cse_scraper import IITBCSEScraper
+from scrapers.base_scrapper import BaseCourseScraper
+from scrapers.strategies.iitm_cse_scraper import IITMCSEScraper
+from scrapers.strategies.iitb_cse_scraper import IITBCSEScraper
 
 
 class ScraperRegistry:
