@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { GraduationCap, LayoutDashboard, Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -8,6 +11,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ModeToggle } from "@/components/ui/mode-toggle";
+import { cn } from "@/lib/utils";
 
 const navigationItems = [
   { href: "/", label: "Home" },
@@ -16,6 +20,17 @@ const navigationItems = [
 ];
 
 export function Navbar() {
+  const pathname = usePathname();
+
+  const isActive = (href: string) =>
+    href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+
+  const linkClassName = (href: string) =>
+    cn(
+      "text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
+      isActive(href) && "font-semibold text-foreground",
+    );
+
   return (
     <header className="border-b bg-background">
       <Collapsible>
@@ -37,7 +52,8 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                aria-current={isActive(item.href) ? "page" : undefined}
+                className={linkClassName(item.href)}
               >
                 {item.label}
               </Link>
@@ -79,7 +95,8 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                aria-current={isActive(item.href) ? "page" : undefined}
+                className={linkClassName(item.href)}
               >
                 {item.label}
               </Link>
