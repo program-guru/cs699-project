@@ -9,3 +9,4 @@ __pycache__/
 .env
 .git/
 data/*
+.DS_Store
