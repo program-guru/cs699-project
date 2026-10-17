@@ -1,5 +1,5 @@
-import { DataCard } from "@/components/home/data-card";
-import { SearchCard } from "@/components/home/search-card";
+import { DataCard } from "@/components/colleges/data-card";
+import { SearchCard } from "@/components/colleges/search-card";
 
 export default function Home() {
   return (
