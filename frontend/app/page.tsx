@@ -1,7 +1,9 @@
+import { Hero } from "@/components/home/hero";
+
 export default function Home() {
   return (
-    <p>
-      Hello
-    </p>
+    <main className="flex-1">
+      <Hero />
+    </main>
   );
 }
