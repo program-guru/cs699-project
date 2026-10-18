@@ -1,4 +1,5 @@
 from typing import Annotated
+
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 PyObjectId = Annotated[str, BeforeValidator(str)]
@@ -14,7 +15,7 @@ class AdminModel(BaseModel):
         json_schema_extra={
             "example": {
                 "username": "admin",
-                "password": "pass123"
+                "password": "pass123",
             }
         }
     )

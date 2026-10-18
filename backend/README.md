@@ -60,6 +60,15 @@ generated with `pwdlib`; never store plaintext passwords. Configure `SECRET_KEY`
 `ALGORITHM`, and `ACCESS_TOKEN_EXPIRE_MINUTES` in the environment before issuing
 tokens.
 
+The following admin-management endpoints require the `access_token` cookie
+created by login:
+
+- `POST /admin/` creates an admin.
+- `PUT /admin/{username}` updates an admin's username and password.
+- `DELETE /admin/{username}` deletes an admin.
+
+All admin passwords are hashed before being stored.
+
 ## Learn More
 
 - [FastAPI Documentation](https://fastapi.tiangolo.com)

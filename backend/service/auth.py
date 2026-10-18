@@ -26,6 +26,13 @@ async def authenticate_admin(
     return admin
 
 
+async def get_admin_by_username(
+    database: AsyncDatabase, username: str
+) -> AdminModel | None:
+    document = await database["admins"].find_one({"username": username})
+    return AdminModel.model_validate(document) if document is not None else None
+
+
 def create_access_token(subject: str) -> str:
     """Create a signed access token for an authenticated admin."""
     if not settings.SECRET_KEY:
