@@ -6,7 +6,7 @@ from pymongo.asynchronous.database import AsyncDatabase
 
 from core.config import settings
 from core.database import get_database_session
-from models.admin import AdminModel
+from models.admin import Admin
 from service.auth import get_admin_by_username
 
 DBSession = Annotated[AsyncDatabase, Depends(get_database_session)]
@@ -16,7 +16,7 @@ access_token_cookie = APIKeyCookie(name="access_token", auto_error=False)
 async def get_current_admin(
     database: DBSession,
     access_token: Annotated[str | None, Depends(access_token_cookie)],
-) -> AdminModel:
+) -> Admin:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid or expired authentication cookie",
@@ -45,4 +45,4 @@ async def get_current_admin(
     return admin
 
 
-CurrentAdmin = Annotated[AdminModel, Depends(get_current_admin)]
+CurrentAdmin = Annotated[Admin, Depends(get_current_admin)]

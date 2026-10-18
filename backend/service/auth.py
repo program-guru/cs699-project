@@ -6,20 +6,20 @@ from pwdlib import PasswordHash
 from pymongo.asynchronous.database import AsyncDatabase
 
 from core.config import settings
-from models.admin import AdminModel
+from models.admin import Admin
 
 password_hash = PasswordHash.recommended()
 
 
 async def authenticate_admin(
     database: AsyncDatabase, username: str, password: str
-) -> AdminModel | None:
+) -> Admin | None:
     """Return the matching admin when the supplied credentials are valid."""
     document = await database["admins"].find_one({"username": username})
     if document is None:
         return None
 
-    admin = AdminModel.model_validate(document)
+    admin = Admin.model_validate(document)
     if not password_hash.verify(password, admin.password):
         return None
 
@@ -28,9 +28,9 @@ async def authenticate_admin(
 
 async def get_admin_by_username(
     database: AsyncDatabase, username: str
-) -> AdminModel | None:
+) -> Admin | None:
     document = await database["admins"].find_one({"username": username})
-    return AdminModel.model_validate(document) if document is not None else None
+    return Admin.model_validate(document) if document is not None else None
 
 
 def create_access_token(subject: str) -> str:

@@ -20,7 +20,3 @@ app = FastAPI(
 
 
 app.include_router(login_router)
-
-@app.get("/")
-def main():
-    return {"message": "Hello World"}

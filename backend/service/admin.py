@@ -3,7 +3,7 @@ from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.errors import DuplicateKeyError
 
 from core.config import settings
-from models.admin import AdminModel
+from models.admin import Admin, AdminRead
 from service.auth import password_hash
 
 
@@ -23,7 +23,7 @@ async def initialize_database(database: AsyncDatabase) -> None:
 
 
 async def create_admin(
-    database: AsyncDatabase, admin: AdminModel
+    database: AsyncDatabase, admin: Admin
 ) -> Literal["created", "duplicate", "protected"]:
     if admin.username == settings.ROOT_USERNAME:
         return "protected"
@@ -39,8 +39,19 @@ async def create_admin(
     return "created"
 
 
+async def list_admins(database: AsyncDatabase) -> list[AdminRead]:
+    cursor = database["admins"].find(
+        {},
+        projection={"password": 0},
+    ).sort("username", 1)
+    return [
+        AdminRead.model_validate(document)
+        async for document in cursor
+    ]
+
+
 async def update_admin(
-    database: AsyncDatabase, username: str, admin: AdminModel
+    database: AsyncDatabase, username: str, admin: Admin
 ) -> Literal["updated", "not_found", "duplicate", "protected"]:
     if username == settings.ROOT_USERNAME:
         return "protected"

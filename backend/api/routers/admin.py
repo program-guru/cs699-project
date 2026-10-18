@@ -2,9 +2,9 @@ from fastapi import APIRouter, HTTPException, Response, status
 
 from api.dependencies import CurrentAdmin, DBSession
 from core.config import settings
-from models.admin import AdminModel
+from models.admin import Admin, AdminRead
 from models.dto import DTO
-from service.admin import create_admin, delete_admin, update_admin
+from service.admin import create_admin, delete_admin, list_admins, update_admin
 from service.auth import authenticate_admin, create_access_token
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 @router.post("/login", response_model=DTO[None])
 async def login(
     database: DBSession,
-    credentials: AdminModel,
+    credentials: Admin,
     response: Response,
 ) -> DTO[None]:
     admin = await authenticate_admin(
@@ -37,10 +37,22 @@ async def login(
     return DTO(success=True, message="Login successful")
 
 
+@router.get("/", response_model=DTO[list[AdminRead]])
+async def get_admins(
+    database: DBSession,
+    _: CurrentAdmin,
+) -> DTO[list[AdminRead]]:
+    return DTO(
+        success=True,
+        message="Admins retrieved successfully",
+        data=await list_admins(database),
+    )
+
+
 @router.post("/", response_model=DTO[None], status_code=status.HTTP_201_CREATED)
 async def create_admin_account(
     database: DBSession,
-    admin: AdminModel,
+    admin: Admin,
     _: CurrentAdmin,
 ) -> DTO[None]:
     create_result = await create_admin(database, admin)
@@ -62,7 +74,7 @@ async def create_admin_account(
 async def update_admin_account(
     database: DBSession,
     username: str,
-    admin: AdminModel,
+    admin: Admin,
     _: CurrentAdmin,
 ) -> DTO[None]:
     update_result = await update_admin(database, username, admin)

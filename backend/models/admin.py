@@ -4,9 +4,17 @@ from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 PyObjectId = Annotated[str, BeforeValidator(str)]
 
-class AdminModel(BaseModel):
+class AdminRead(BaseModel):
     id: PyObjectId | None = Field(default=None, alias="_id")
     username: str
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True,
+    )
+
+
+class Admin(AdminRead):
     password: str
 
     model_config = ConfigDict(
