@@ -1,8 +1,0 @@
-requests
-beautifulsoup4
-lxml
-pydantic>=2,<3
-PyYAML
-fastapi
-uvicorn
-pytest
