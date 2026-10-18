@@ -1,5 +1,4 @@
 from collections.abc import AsyncGenerator
-
 from pymongo import AsyncMongoClient
 from pymongo.asynchronous.database import AsyncDatabase
 
