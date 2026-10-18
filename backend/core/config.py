@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     SECRET_KEY: str = ""
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ROOT_USERNAME: str = "root"
+    ROOT_PASSWORD: str = "root"
 
     # This tells Pydantic where to find the .env file and allows extra fields
     model_config = SettingsConfigDict(

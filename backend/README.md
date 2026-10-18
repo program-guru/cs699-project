@@ -60,6 +60,13 @@ generated with `pwdlib`; never store plaintext passwords. Configure `SECRET_KEY`
 `ALGORITHM`, and `ACCESS_TOKEN_EXPIRE_MINUTES` in the environment before issuing
 tokens.
 
+The application creates an immutable root admin during startup. Its default
+credentials are `root`/`root`; set `ROOT_PASSWORD` before first startup to
+choose a different initial password. The root record is created only when
+missing, so its password is never reset on later startups.
+Admin usernames are enforced as unique by a MongoDB unique index. The root
+admin cannot be created, updated, or deleted through the API.
+
 The following admin-management endpoints require the `access_token` cookie
 created by login:
 

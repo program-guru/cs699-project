@@ -16,11 +16,10 @@ async def login(
     credentials: AdminModel,
     response: Response,
 ) -> DTO[None]:
-    
     admin = await authenticate_admin(
         database, username=credentials.username, password=credentials.password
     )
-    
+
     if admin is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -44,7 +43,13 @@ async def create_admin_account(
     admin: AdminModel,
     _: CurrentAdmin,
 ) -> DTO[None]:
-    if not await create_admin(database, admin):
+    create_result = await create_admin(database, admin)
+    if create_result == "protected":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The root admin cannot be created",
+        )
+    if create_result == "duplicate":
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An admin with that username already exists",
@@ -61,6 +66,11 @@ async def update_admin_account(
     _: CurrentAdmin,
 ) -> DTO[None]:
     update_result = await update_admin(database, username, admin)
+    if update_result == "protected":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The root admin cannot be updated",
+        )
     if update_result == "not_found":
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -81,7 +91,13 @@ async def delete_admin_account(
     username: str,
     _: CurrentAdmin,
 ) -> DTO[None]:
-    if not await delete_admin(database, username):
+    delete_result = await delete_admin(database, username)
+    if delete_result == "protected":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The root admin cannot be deleted",
+        )
+    if delete_result == "not_found":
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Admin not found",
