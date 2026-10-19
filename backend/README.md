@@ -76,6 +76,21 @@ created by login:
 
 All admin passwords are hashed before being stored.
 
+## Response format
+
+Successful and error responses use the `DTO` envelope:
+
+```json
+{
+  "success": false,
+  "message": "Validation error: body -> username: Field required",
+  "data": null
+}
+```
+
+HTTP exceptions, request validation errors, and unexpected server errors are
+converted to this format by the application's exception handlers.
+
 ## Learn More
 
 - [FastAPI Documentation](https://fastapi.tiangolo.com)
