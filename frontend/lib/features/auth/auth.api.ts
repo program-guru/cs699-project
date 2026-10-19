@@ -1,4 +1,4 @@
-import { baseApi } from '../api/baseApi'
+import { baseApi } from '@/lib/features/api/baseApi'
 
 interface LoginRequest {
   username: string
