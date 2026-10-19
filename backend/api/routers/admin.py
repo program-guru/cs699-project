@@ -33,8 +33,15 @@ async def login(
         httponly=True,
         samesite="lax",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/",
     )
     return DTO(success=True, message="Login successful")
+
+
+@router.post("/logout", response_model=DTO[None])
+async def logout(response: Response) -> DTO[None]:
+    response.delete_cookie(key="access_token", path="/")
+    return DTO(success=True, message="Logout successful")
 
 
 @router.get("/", response_model=DTO[list[AdminRead]])

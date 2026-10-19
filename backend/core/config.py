@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     ROOT_USERNAME: str = "root"
     ROOT_PASSWORD: str = "root"
+    FRONTEND_URL: str = "http://localhost:3000"
 
     # This tells Pydantic where to find the .env file and allows extra fields
     model_config = SettingsConfigDict(
