@@ -3,6 +3,7 @@ import { Inter, Montserrat } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/layout/theme-provider";
+import StoreProvider from "@/components/layout/store-provider";
 
 const montserratHeading = Montserrat({
   subsets: ["latin"],
@@ -36,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <StoreProvider>{children}</StoreProvider>
         </ThemeProvider>
       </body>
     </html>
