@@ -1,9 +1,9 @@
 import { baseApi } from '@/lib/features/api/baseApi'
-import type { AuthResponse, LoginRequest } from '@/types/auth'
+import type { AuthResponse, AuthRequest } from '@/types/auth'
 
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    login: builder.mutation<AuthResponse, LoginRequest>({
+    login: builder.mutation<AuthResponse, AuthRequest>({
       query: (credentials) => ({
         url: '/admin/login',
         method: 'POST',

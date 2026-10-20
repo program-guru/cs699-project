@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { useAppDispatch } from "@/lib/hooks";
 import { useLoginMutation } from "@/lib/features/auth/auth.api";
 import { setAuthenticatedUser } from "@/lib/features/auth/auth.slice";
+import { getApiErrorMessage } from "@/lib/features/api/error";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,10 +36,10 @@ export default function LoginPage() {
     }
   };
 
-  const errorMessage =
-    "data" in (error ?? {})
-      ? String((error as { data?: { detail?: string } }).data?.detail ?? "Unable to sign in")
-      : "Unable to sign in. Please try again.";
+  const errorMessage = getApiErrorMessage(
+    error,
+    "Unable to sign in. Please try again.",
+  );
 
   return (
     <main className="flex min-h-svh items-center justify-center bg-muted/30 p-6 md:p-10">

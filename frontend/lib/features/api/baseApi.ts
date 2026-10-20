@@ -7,6 +7,7 @@ export const baseApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: apiUrl,
     credentials: 'include',
+    timeout: 5000,
     prepareHeaders: (headers) => {
       headers.set('Content-Type', 'application/json')
       return headers

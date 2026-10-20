@@ -6,13 +6,15 @@ import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { useLogoutMutation } from "@/lib/features/auth/auth.api";
 import { useGetAdminsQuery } from "@/lib/features/admin/admin.api";
 import { clearAuthenticatedUser } from "@/lib/features/auth/auth.slice";
+import { getApiErrorMessage } from "@/lib/features/api/error";
 
 export default function AdminPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const username = useAppSelector((state) => state.auth.username);
   const { data, isLoading, error } = useGetAdminsQuery();
-  const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
+  const [logout, { isLoading: isLoggingOut, error: logoutError }] =
+    useLogoutMutation();
 
   const handleLogout = async () => {
     try {
@@ -31,9 +33,23 @@ export default function AdminPage() {
           <p className="text-sm text-muted-foreground">Signed in as</p>
           <h1 className="text-3xl font-semibold">{username ?? "Admin"}</h1>
         </div>
-        <Button variant="outline" onClick={handleLogout} disabled={isLoggingOut}>
-          {isLoggingOut ? "Signing out..." : "Sign out"}
-        </Button>
+        <div className="flex flex-col items-end gap-2">
+          <Button
+            variant="outline"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? "Signing out..." : "Sign out"}
+          </Button>
+          {logoutError && (
+            <p role="alert" className="text-sm text-destructive">
+              {getApiErrorMessage(
+                logoutError,
+                "Unable to sign out. Please try again.",
+              )}
+            </p>
+          )}
+        </div>
       </header>
 
       <section>
@@ -41,7 +57,10 @@ export default function AdminPage() {
         {isLoading && <p>Loading administrators...</p>}
         {error && (
           <p role="alert" className="text-destructive">
-            Unable to load administrators.
+            {getApiErrorMessage(
+              error,
+              "Unable to load administrators. Please try again.",
+            )}
           </p>
         )}
         {data && (

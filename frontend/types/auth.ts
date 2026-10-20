@@ -1,6 +1,6 @@
 import type { DTO } from '@/types/dto'
 
-export interface LoginRequest {
+export interface AuthRequest {
   username: string
   password: string
 }
