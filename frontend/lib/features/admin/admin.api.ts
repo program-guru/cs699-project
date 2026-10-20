@@ -1,15 +1,9 @@
 import { baseApi } from '@/lib/features/api/baseApi'
-
-interface Admin {
-  id: string | null
-  username: string
-}
-
-interface AdminResponse {
-  success: boolean
-  message: string
-  data: Admin[]
-}
+import type {
+  AdminMutationResponse,
+  AdminRequest,
+  AdminResponse,
+} from '@/types/admin'
 
 export const adminApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -17,7 +11,38 @@ export const adminApi = baseApi.injectEndpoints({
       query: () => '/admin/',
       providesTags: ['Admin'],
     }),
+    createAdmin: builder.mutation<AdminMutationResponse, AdminRequest>({
+      query: (admin) => ({
+        url: '/admin/',
+        method: 'POST',
+        body: admin,
+      }),
+      invalidatesTags: ['Admin'],
+    }),
+    updateAdmin: builder.mutation<
+      AdminMutationResponse,
+      { username: string; admin: AdminRequest }
+    >({
+      query: ({ username, admin }) => ({
+        url: `/admin/${encodeURIComponent(username)}`,
+        method: 'PUT',
+        body: admin,
+      }),
+      invalidatesTags: ['Admin'],
+    }),
+    deleteAdmin: builder.mutation<AdminMutationResponse, string>({
+      query: (username) => ({
+        url: `/admin/${encodeURIComponent(username)}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Admin'],
+    }),
   }),
 })
 
-export const { useGetAdminsQuery } = adminApi
+export const {
+  useGetAdminsQuery,
+  useCreateAdminMutation,
+  useUpdateAdminMutation,
+  useDeleteAdminMutation,
+} = adminApi

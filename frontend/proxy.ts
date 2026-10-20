@@ -11,14 +11,12 @@ export function proxy(request: NextRequest) {
 
   // Protect admin routes
   if (pathname.startsWith("/admin") && !accessToken) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("from", pathname);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/login"],
+  matcher: ["/admin/:path*", "/login/:path*"],
 };

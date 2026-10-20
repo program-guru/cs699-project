@@ -1,26 +1,16 @@
 import { baseApi } from '@/lib/features/api/baseApi'
-
-interface LoginRequest {
-  username: string
-  password: string
-}
-
-interface ApiResponse {
-  success: boolean
-  message: string
-  data: null
-}
+import type { AuthResponse, LoginRequest } from '@/types/auth'
 
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    login: builder.mutation<ApiResponse, LoginRequest>({
+    login: builder.mutation<AuthResponse, LoginRequest>({
       query: (credentials) => ({
         url: '/admin/login',
         method: 'POST',
         body: credentials,
       }),
     }),
-    logout: builder.mutation<ApiResponse, void>({
+    logout: builder.mutation<AuthResponse, void>({
       query: () => ({
         url: '/admin/logout',
         method: 'POST',
