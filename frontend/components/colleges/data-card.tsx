@@ -7,7 +7,7 @@ import {
 
 export function DataCard() {
   return (
-    <Card className="min-h-96 lg:col-span-2">
+    <Card className="min-h-96">
       <CardHeader>
         <CardTitle>Data</CardTitle>
       </CardHeader>

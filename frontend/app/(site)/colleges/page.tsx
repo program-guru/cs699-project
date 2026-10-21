@@ -7,6 +7,7 @@ export default function Home() {
       <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-3">
         <SearchCard />
         <DataCard />
+        <DataCard />
       </div>
     </main>
   );

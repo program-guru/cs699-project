@@ -5,7 +5,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.exception_handlers import general_exception_handler, validation_exception_handler, http_exception_handler
-from api.routers.admin import router as login_router
+from api.routers.admin import router as admin_router
+from api.routers.auth import router as auth_router
 from core.database import close_database_connection, get_database
 from service.admin import initialize_database
 from core.config import settings
@@ -34,4 +35,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(login_router)
+app.include_router(auth_router)
+app.include_router(admin_router)

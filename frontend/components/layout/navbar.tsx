@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { GraduationCap, LayoutDashboard, Menu } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { GraduationCap, LogOut, Menu, UserShield } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,9 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ModeToggle } from "@/components/ui/mode-toggle";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { useLogoutMutation } from "@/lib/features/auth/auth.api";
+import { clearAuthenticatedUser } from "@/lib/features/auth/auth.slice";
 import { cn } from "@/lib/utils";
 
 const navigationItems = [
@@ -19,8 +22,24 @@ const navigationItems = [
   { href: "/compare", label: "Compare" },
 ];
 
+const adminNavigationItems = [
+  { href: "/admin", label: "Manage Admin" },
+  { href: "/admin/data", label: "View / Edit Data" },
+];
+
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { status: authStatus, isAuthenticated } = useAppSelector(
+    (state) => state.auth,
+  );
+  const [logout, { isLoading: isLoggingOut, error: logoutError }] =
+    useLogoutMutation();
+
+  if (authStatus === "idle" || authStatus === "loading") {
+    return <NavbarSkeleton />;
+  }
 
   const isActive = (href: string) =>
     href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
@@ -30,6 +49,42 @@ export function Navbar() {
       "text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
       isActive(href) && "font-semibold text-foreground",
     );
+
+  const handleLogout = async () => {
+    try {
+      await logout().unwrap();
+      dispatch(clearAuthenticatedUser());
+      router.replace("/login");
+    } catch {
+      // The mutation error is rendered next to the logout control.
+    }
+  };
+
+  const renderNavigationItems = () => (
+    <>
+      {navigationItems.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          aria-current={isActive(item.href) ? "page" : undefined}
+          className={linkClassName(item.href)}
+        >
+          {item.label}
+        </Link>
+      ))}
+      {isAuthenticated &&
+        adminNavigationItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={isActive(item.href) ? "page" : undefined}
+            className={linkClassName(item.href)}
+          >
+            {item.label}
+          </Link>
+        ))}
+    </>
+  );
 
   return (
     <header className="border-b bg-background">
@@ -48,31 +103,40 @@ export function Navbar() {
           </Link>
 
           <div className="hidden items-center gap-6 md:flex">
-            {navigationItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={isActive(item.href) ? "page" : undefined}
-                className={linkClassName(item.href)}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {renderNavigationItems()}
           </div>
 
           <div className="hidden items-center gap-4 md:flex">
             <ModeToggle />
 
-            <Button
-              aria-label="Go to admin panel"
-              nativeButton={false}
-              render={<Link href="/admin" />}
-              size="icon"
-              title="Admin panel"
-              variant="outline"
-            >
-              <LayoutDashboard aria-hidden="true" />
-            </Button>
+            {isAuthenticated ? (
+              <Button
+                aria-label="Log out"
+                disabled={isLoggingOut}
+                onClick={handleLogout}
+                size="icon"
+                title="Log out"
+                variant="outline"
+              >
+                <LogOut aria-hidden="true" />
+              </Button>
+            ) : (
+              <Button
+                aria-label="Go to admin login"
+                nativeButton={false}
+                render={<Link href="/login" />}
+                size="icon"
+                title="Admin login"
+                variant="outline"
+              >
+                <UserShield aria-hidden="true" />
+              </Button>
+            )}
+            {logoutError && (
+              <p role="alert" className="text-sm text-destructive">
+                Unable to log out. Please try again.
+              </p>
+            )}
           </div>
 
           <CollapsibleTrigger
@@ -91,34 +155,57 @@ export function Navbar() {
 
         <CollapsibleContent className="border-t px-4 py-4 md:hidden sm:px-6">
           <div className="flex flex-col gap-4">
-            {navigationItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={isActive(item.href) ? "page" : undefined}
-                className={linkClassName(item.href)}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {renderNavigationItems()}
 
             <div className="flex items-center gap-4">
               <ModeToggle />
 
-              <Button
-                aria-label="Go to admin panel"
-                nativeButton={false}
-                render={<Link href="/admin" />}
-                size="icon"
-                title="Admin panel"
-                variant="outline"
-              >
-                <LayoutDashboard aria-hidden="true" />
-              </Button>
+              {isAuthenticated ? (
+                <Button
+                  aria-label="Log out"
+                  disabled={isLoggingOut}
+                  onClick={handleLogout}
+                  size="icon"
+                  title="Log out"
+                  variant="outline"
+                >
+                  <LogOut aria-hidden="true" />
+                </Button>
+              ) : (
+                <Button
+                  aria-label="Go to admin login"
+                  nativeButton={false}
+                  render={<Link href="/login" />}
+                  size="icon"
+                  title="Admin login"
+                  variant="outline"
+                >
+                  <UserShield aria-hidden="true" />
+                </Button>
+              )}
             </div>
+            {logoutError && (
+              <p role="alert" className="text-sm text-destructive">
+                Unable to log out. Please try again.
+              </p>
+            )}
           </div>
         </CollapsibleContent>
       </Collapsible>
+    </header>
+  );
+}
+
+function NavbarSkeleton() {
+  return (
+    <header className="border-b bg-background">
+      <nav
+        aria-label="Main navigation"
+        className="mx-auto flex w-full items-center justify-between px-4 py-3 sm:px-6 lg:px-8"
+      >
+        <span className="h-6 w-32 animate-pulse rounded bg-muted" />
+        <span className="h-6 w-24 animate-pulse rounded bg-muted" />
+      </nav>
     </header>
   );
 }
