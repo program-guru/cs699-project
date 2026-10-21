@@ -9,12 +9,12 @@ from service.auth import authenticate_admin, create_access_token
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/login", response_model=DTO[None])
+@router.post("/login", response_model=DTO[AdminRead])
 async def login(
     database: DBSession,
     credentials: Admin,
     response: Response,
-) -> DTO[None]:
+) -> DTO[AdminRead]:
     admin = await authenticate_admin(
         database, username=credentials.username, password=credentials.password
     )
@@ -28,13 +28,17 @@ async def login(
 
     response.set_cookie(
         key="access_token",
-        value=create_access_token(admin.username),
+        value=create_access_token(str(admin.id), admin.username),
         httponly=True,
         samesite="lax",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         path="/",
     )
-    return DTO(success=True, message="Login successful")
+    return DTO(
+        success=True,
+        message="Login successful",
+        data=AdminRead(id=admin.id, username=admin.username),
+    )
 
 
 @router.post("/logout", response_model=DTO[None])

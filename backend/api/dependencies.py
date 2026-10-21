@@ -7,7 +7,7 @@ from pymongo.asynchronous.database import AsyncDatabase
 from core.config import settings
 from core.database import get_database_session
 from models.admin import Admin
-from service.auth import get_admin_by_username
+from service.auth import get_admin_by_id
 
 DBSession = Annotated[AsyncDatabase, Depends(get_database_session)]
 access_token_cookie = APIKeyCookie(name="access_token", auto_error=False)
@@ -32,13 +32,13 @@ async def get_current_admin(
             settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM],
         )
-        username = payload.get("sub")
-        if not isinstance(username, str) or not username:
+        admin_id = payload.get("sub")
+        if not isinstance(admin_id, str) or not admin_id:
             raise credentials_exception
     except jwt.InvalidTokenError as error:
         raise credentials_exception from error
 
-    admin = await get_admin_by_username(database, username)
+    admin = await get_admin_by_id(database, admin_id)
     if admin is None:
         raise credentials_exception
 

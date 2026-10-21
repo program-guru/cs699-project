@@ -6,7 +6,7 @@ export interface AuthRequest {
   password: string
 }
 
-export type AuthResponse = DTO<null>
+export type AuthResponse = DTO<Admin>
 export type CurrentUserResponse = DTO<Admin>
 
 export type AuthStatus =
@@ -16,7 +16,7 @@ export type AuthStatus =
   | 'unauthenticated'
 
 export interface AuthState {
-  username: string | null
+  user: Admin | null
   status: AuthStatus
   isAuthenticated: boolean
 }

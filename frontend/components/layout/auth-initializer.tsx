@@ -18,7 +18,7 @@ export function AuthInitializer() {
     if (isLoading) {
       dispatch(setAuthLoading());
     } else if (data?.data) {
-      dispatch(setAuthenticatedUser(data.data.username));
+      dispatch(setAuthenticatedUser(data.data));
     } else if (isError) {
       dispatch(setUnauthenticated());
     }

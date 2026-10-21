@@ -54,11 +54,14 @@ curl -i -c cookies.txt -X POST http://localhost:8000/admin/login \
   -d '{"username":"admin","password":"pass123"}'
 ```
 
-The response body contains a success message; the token is not exposed in JSON.
+The response body contains the authenticated admin's MongoDB ID and username;
+the token is not exposed in JSON. The JWT stores the MongoDB ID as `sub` and
+the username as `username`.
 Admins are read from the `admins` collection. Store passwords as Argon2 hashes
 generated with `pwdlib`; never store plaintext passwords. Configure `SECRET_KEY`,
 `ALGORITHM`, and `ACCESS_TOKEN_EXPIRE_MINUTES` in the environment before issuing
-tokens.
+tokens. Tokens identify admins by their immutable MongoDB document ID, so an
+admin can change its username without invalidating the current session.
 
 The application creates an immutable root admin during startup. Its default
 credentials are `root`/`root`; set `ROOT_PASSWORD` before first startup to
@@ -73,6 +76,9 @@ created by login:
 - `POST /admin/` creates an admin.
 - `PUT /admin/{username}` updates an admin's username and password.
 - `DELETE /admin/{username}` deletes an admin.
+
+Deleting the currently authenticated admin also clears its authentication
+cookie and ends the session.
 
 All admin passwords are hashed before being stored.
 

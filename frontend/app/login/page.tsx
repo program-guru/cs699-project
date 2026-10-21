@@ -28,8 +28,11 @@ export default function LoginPage() {
     event.preventDefault();
 
     try {
-      await login({ username, password }).unwrap();
-      dispatch(setAuthenticatedUser(username));
+      const response = await login({ username, password }).unwrap();
+      if (!response.data) {
+        throw new Error("Login response did not include the authenticated user.");
+      }
+      dispatch(setAuthenticatedUser(response.data));
       router.replace("/admin");
     } catch {
       // The mutation error is rendered below.
