@@ -27,3 +27,13 @@ class Admin(AdminRead):
             }
         }
     )
+
+
+class AdminUpdate(BaseModel):
+    username: str
+    password: str | None = None
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True,
+    )

@@ -48,7 +48,7 @@ export function SearchCard() {
       <CardContent>
         <Command className="rounded-none border">
           <CommandInput placeholder="Type to search..." />
-          <ScrollArea className="max-h-96">
+          <ScrollArea className="max-h-85">
             <CommandList className="max-h-none overflow-visible">
               <CommandEmpty>No colleges found.</CommandEmpty>
               <CommandGroup>

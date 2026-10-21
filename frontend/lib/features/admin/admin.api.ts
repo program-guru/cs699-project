@@ -3,6 +3,7 @@ import type {
   AdminMutationResponse,
   AdminRequest,
   AdminResponse,
+  AdminUpdateRequest,
 } from '@/types/admin'
 
 export const adminApi = baseApi.injectEndpoints({
@@ -21,7 +22,7 @@ export const adminApi = baseApi.injectEndpoints({
     }),
     updateAdmin: builder.mutation<
       AdminMutationResponse,
-      { username: string; admin: AdminRequest }
+      { username: string; admin: AdminUpdateRequest }
     >({
       query: ({ username, admin }) => ({
         url: `/admin/${encodeURIComponent(username)}`,

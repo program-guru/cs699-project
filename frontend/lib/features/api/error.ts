@@ -1,6 +1,3 @@
-import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
-import type { SerializedError } from "@reduxjs/toolkit";
-
 function getResponseMessage(data: unknown): string | undefined {
   if (typeof data === "string") {
     return data;
@@ -21,10 +18,10 @@ function getResponseMessage(data: unknown): string | undefined {
 }
 
 export function getApiErrorMessage(
-  error: FetchBaseQueryError | SerializedError | undefined,
+  error: unknown,
   fallback: string,
 ): string {
-  if (!error) {
+  if (!error || typeof error !== "object") {
     return fallback;
   }
 
