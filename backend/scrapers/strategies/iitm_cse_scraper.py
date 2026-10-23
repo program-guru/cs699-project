@@ -1,9 +1,9 @@
 import re
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from bs4 import BeautifulSoup
 
-from scrapers.base_scraper import BaseCourseScraper
+from scrapers.base_scraper import BaseCourseScraper, RawCourse
 
 
 class IITMCSEScraper(BaseCourseScraper):
@@ -24,8 +24,7 @@ class IITMCSEScraper(BaseCourseScraper):
         re.IGNORECASE,
     )
 
-    def parse_courses(self, soup: BeautifulSoup) -> list[dict[str, Any]]:
-
+    def parse_courses(self, soup: BeautifulSoup) -> list[RawCourse]:
         cards = soup.select("div.card")
 
         if not cards:
@@ -34,7 +33,7 @@ class IITMCSEScraper(BaseCourseScraper):
                 "The page structure may have changed."
             )
 
-        courses: list[dict[str, Any]] = []
+        courses: list[RawCourse] = []
         seen: set[str] = set()
 
         for card in cards:

@@ -1,12 +1,7 @@
-from typing import Any
-
 from models.course import Course
 from models.scraper import ScrapeResult
-from pydantic import TypeAdapter
 from pymongo.asynchronous.client_session import AsyncClientSession
 from pymongo.asynchronous.database import AsyncDatabase
-
-COURSE_ADAPTER = TypeAdapter(list[Course])
 
 
 async def _supports_transactions(database: AsyncDatabase) -> bool:
@@ -19,10 +14,9 @@ async def replace_courses(
     *,
     college_id: str,
     department_id: str,
-    records: list[dict[str, Any]],
+    records: list[Course],
 ) -> ScrapeResult:
-    courses = COURSE_ADAPTER.validate_python(records)
-    documents = [course.model_dump(mode="json") for course in courses]
+    documents = [course.model_dump(mode="json") for course in records]
     source_filter = {
         "college_id": college_id,
         "department_id": department_id,
@@ -37,7 +31,7 @@ async def replace_courses(
         async with database.client.start_session() as session:
             await session.with_transaction(replace_in_transaction)
     else:
-        await replace_in_transaction(None) 
+        await replace_in_transaction(None)
 
     return ScrapeResult(
         college_id=college_id,

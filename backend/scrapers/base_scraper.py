@@ -4,6 +4,10 @@ from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
+from models.course import Course
+from pydantic import HttpUrl, TypeAdapter
+
+RawCourse = dict[str, Any]
 
 
 class BaseCourseScraper(ABC):
@@ -56,16 +60,15 @@ class BaseCourseScraper(ABC):
         return soup
 
     @abstractmethod
-    def parse_courses(self, soup: BeautifulSoup) -> list[dict[str, Any]]:
+    def parse_courses(self, soup: BeautifulSoup) -> list[RawCourse]:
         """Extract raw course records from the page."""
         raise NotImplementedError
 
-    def to_common_schema(self, raw: dict[str, Any]) -> dict[str, Any]:
+    def to_common_schema(self, raw: dict[str, Any]) -> Course:
         """Attach common college and department metadata."""
 
-        source_url = urljoin(
-            self.base_url,
-            raw.get("source_url") or self.base_url,
+        source_url = TypeAdapter(HttpUrl).validate_python(
+            urljoin(self.base_url, raw.get("source_url") or self.base_url)
         )
 
         known_fields = {
@@ -82,36 +85,38 @@ class BaseCourseScraper(ABC):
             "source_url",
         }
 
-        return {
-            "college_id": self.college_id,
-            "college_name": self.college_name,
-            "department_id": self.department_id,
-            "department_name": self.department_name,
-            "course_code": raw.get("course_code"),
-            "title": raw["title"],
-            "category": raw.get("category"),
-            "level": raw.get("level"),
-            "credits": raw.get("credits"),
-            "description": raw.get("description"),
-            "prerequisites": raw.get("prerequisites") or [],
-            "instructor": raw.get("instructor"),
-            "semester_offered": raw.get("semester_offered"),
-            "syllabus_url": (
-                urljoin(self.base_url, raw["syllabus_url"])
+        return Course(
+            college_id=self.college_id,
+            college_name=self.college_name,
+            department_id=self.department_id,
+            department_name=self.department_name,
+            course_code=raw.get("course_code"),
+            title=raw["title"],
+            category=raw.get("category"),
+            level=raw.get("level"),
+            credits=raw.get("credits"),
+            description=raw.get("description"),
+            prerequisites=raw.get("prerequisites") or [],
+            instructor=raw.get("instructor"),
+            semester_offered=raw.get("semester_offered"),
+            syllabus_url=(
+                TypeAdapter(HttpUrl).validate_python(
+                    urljoin(self.base_url, raw["syllabus_url"])
+                )
                 if raw.get("syllabus_url")
                 else None
             ),
-            "source_url": source_url,
-            "raw_extra": {
+            source_url=source_url,
+            raw_extra={
                 key: value for key, value in raw.items() if key not in known_fields
             },
-        }
+        )
 
-    def scrape(self) -> list[dict[str, Any]]:
+    def scrape(self) -> list[Course]:
         soup = self.fetch_page()
         raw_courses = self.parse_courses(soup)
 
-        records = []
+        records: list[Course] = []
 
         for raw in raw_courses:
             if not raw.get("title"):

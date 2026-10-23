@@ -1,8 +1,9 @@
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from bs4 import BeautifulSoup
+from models.course import Course
 
-from scrapers.base_scraper import BaseCourseScraper
+from scrapers.base_scraper import BaseCourseScraper, RawCourse
 
 
 class IITBCSEScraper(BaseCourseScraper):
@@ -14,11 +15,12 @@ class IITBCSEScraper(BaseCourseScraper):
     base_url = "https://www.cse.iitb.ac.in/~internal-live/api/courses/all_courses/"
     request_headers: ClassVar[dict[str, str]] = {"Accept": "application/json"}
 
-    def parse_courses(self, soup: BeautifulSoup) -> list[dict[str, Any]]:
+    def parse_courses(self, soup: BeautifulSoup) -> list[RawCourse]:
         # This API returns JSON, so we do not parse HTML cards.
+        del soup
         raise NotImplementedError("Use scrape() to process the JSON API response.")
 
-    def scrape(self) -> list[dict[str, Any]]:
+    def scrape(self) -> list[Course]:
         response = self.session.get(
             self.base_url,
             timeout=self.timeout,
@@ -30,7 +32,7 @@ class IITBCSEScraper(BaseCourseScraper):
         if not isinstance(data, list):
             raise TypeError("Expected a JSON list from the IIT Bombay courses API.")
 
-        records = []
+        records: list[Course] = []
 
         for item in data:
             if not isinstance(item, dict):
