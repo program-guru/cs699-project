@@ -11,7 +11,6 @@ async def _supports_transactions(database: AsyncDatabase) -> bool:
 
 async def replace_courses(
     database: AsyncDatabase,
-    *,
     college_id: str,
     department_id: str,
     records: list[Course],
