@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+
 from pymongo import AsyncMongoClient
 from pymongo.asynchronous.database import AsyncDatabase
 
@@ -33,7 +34,7 @@ def get_database() -> AsyncDatabase:
     return database
 
 
-async def get_database_session() -> AsyncGenerator[AsyncDatabase, None]:
+async def get_database_session() -> AsyncGenerator[AsyncDatabase]:
     """FastAPI dependency that provides the configured MongoDB database."""
     yield get_database()
 

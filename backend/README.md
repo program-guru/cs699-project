@@ -82,6 +82,23 @@ cookie and ends the session.
 
 All admin passwords are hashed before being stored.
 
+## Course scraping
+
+The protected `POST /scrape/{college_id}/{department_id}` endpoint refreshes
+courses for a registered source. It scrapes and validates the source first,
+then replaces the matching documents in the `courses` collection. A valid
+`access_token` cookie is required:
+
+```bash
+curl -b cookies.txt -X POST \
+  http://localhost:8000/scrape/iitm/cse
+```
+
+The registered sources can be found in `scrapers/registry.py`. Other course
+endpoints can read the refreshed documents directly from MongoDB. Refreshes
+use a MongoDB transaction so a failed write does not remove the previous
+course snapshot.
+
 ## Response format
 
 Successful and error responses use the `DTO` envelope:

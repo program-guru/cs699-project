@@ -1,10 +1,10 @@
-from fastapi import APIRouter, HTTPException, Response, status
-
-from api.dependencies import CurrentAdmin, DBSession
 from core.config import settings
+from fastapi import APIRouter, HTTPException, Response, status
 from models.admin import Admin, AdminRead
 from models.dto import DTO
 from service.auth import authenticate_admin, create_access_token
+
+from api.dependencies import CurrentAdmin, DBSession
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -37,7 +37,7 @@ async def login(
     return DTO(
         success=True,
         message="Login successful",
-        data=AdminRead(id=admin.id, username=admin.username),
+        data=AdminRead(_id=admin.id, username=admin.username),
     )
 
 

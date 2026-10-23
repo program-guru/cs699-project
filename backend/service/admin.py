@@ -1,9 +1,10 @@
 from typing import Literal
-from pymongo.asynchronous.database import AsyncDatabase
-from pymongo.errors import DuplicateKeyError
 
 from core.config import settings
 from models.admin import Admin, AdminRead, AdminUpdate
+from pymongo.asynchronous.database import AsyncDatabase
+from pymongo.errors import DuplicateKeyError
+
 from service.auth import password_hash
 
 
@@ -40,14 +41,15 @@ async def create_admin(
 
 
 async def list_admins(database: AsyncDatabase) -> list[AdminRead]:
-    cursor = database["admins"].find(
-        {},
-        projection={"password": 0},
-    ).sort("username", 1)
-    return [
-        AdminRead.model_validate(document)
-        async for document in cursor
-    ]
+    cursor = (
+        database["admins"]
+        .find(
+            {},
+            projection={"password": 0},
+        )
+        .sort("username", 1)
+    )
+    return [AdminRead.model_validate(document) async for document in cursor]
 
 
 async def update_admin(

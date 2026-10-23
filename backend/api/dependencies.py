@@ -1,12 +1,12 @@
-import jwt
-from fastapi import Depends, HTTPException, status
-from fastapi.security import APIKeyCookie
-from typing_extensions import Annotated
-from pymongo.asynchronous.database import AsyncDatabase
+from typing import Annotated
 
+import jwt
 from core.config import settings
 from core.database import get_database_session
+from fastapi import Depends, HTTPException, status
+from fastapi.security import APIKeyCookie
 from models.admin import Admin
+from pymongo.asynchronous.database import AsyncDatabase
 from service.auth import get_admin_by_id
 
 DBSession = Annotated[AsyncDatabase, Depends(get_database_session)]

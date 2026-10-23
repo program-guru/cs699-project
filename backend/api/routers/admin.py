@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, status
-
-from api.dependencies import CurrentAdmin, DBSession
 from models.admin import Admin, AdminRead, AdminUpdate
 from models.dto import DTO
 from service.admin import create_admin, delete_admin, list_admins, update_admin
+
+from api.dependencies import CurrentAdmin, DBSession
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 

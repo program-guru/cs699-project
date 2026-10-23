@@ -4,6 +4,7 @@ from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 PyObjectId = Annotated[str, BeforeValidator(str)]
 
+
 class AdminRead(BaseModel):
     id: PyObjectId | None = Field(default=None, alias="_id")
     username: str
@@ -25,7 +26,7 @@ class Admin(AdminRead):
                 "username": "admin",
                 "password": "pass123",
             }
-        }
+        },
     )
 
 

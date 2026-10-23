@@ -2,13 +2,12 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import jwt
-from pwdlib import PasswordHash
-from pymongo.asynchronous.database import AsyncDatabase
 from bson import ObjectId
 from bson.errors import InvalidId
-
 from core.config import settings
 from models.admin import Admin
+from pwdlib import PasswordHash
+from pymongo.asynchronous.database import AsyncDatabase
 
 password_hash = PasswordHash.recommended()
 
@@ -26,6 +25,7 @@ async def authenticate_admin(
         return None
 
     return admin
+
 
 async def get_admin_by_id(database: AsyncDatabase, admin_id: str) -> Admin | None:
     try:
