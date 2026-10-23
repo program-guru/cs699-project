@@ -1,9 +1,10 @@
 from typing import Any
 
-from models.course import Course
-from models.scraper import ScrapeResult
 from pydantic import TypeAdapter
 from pymongo.asynchronous.database import AsyncDatabase
+
+from models.course import Course
+from models.scraper import ScrapeResult
 
 COURSE_ADAPTER = TypeAdapter(list[Course])
 
@@ -23,7 +24,7 @@ async def replace_courses(
     }
 
     async with (
-        await database.client.start_session() as session,
+        database.client.start_session() as session,
         session.start_transaction(),
     ):
         await database["courses"].delete_many(source_filter, session=session)
