@@ -23,9 +23,11 @@ export default function LoginPage() {
   const [login, { isLoading, error }] = useLoginMutation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [submitError, setSubmitError] = useState<string>();
 
   const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSubmitError(undefined);
 
     try {
       const response = await login({ username, password }).unwrap();
@@ -35,13 +37,13 @@ export default function LoginPage() {
       dispatch(setAuthenticatedUser(response.data));
       router.replace("/admin");
     } catch {
-      // The mutation error is rendered below.
+      setSubmitError("Unable to sign in. Please try again.");
     }
   };
 
   const errorMessage = getApiErrorMessage(
     error,
-    "Unable to sign in. Please try again.",
+    submitError ?? "Unable to sign in. Please try again.",
   );
 
   return (
@@ -84,7 +86,7 @@ export default function LoginPage() {
                   required
                 />
               </Field>
-              {error && (
+              {(error || submitError) && (
                 <p role="alert" className="text-sm text-destructive">
                   {errorMessage}
                 </p>

@@ -11,9 +11,12 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ModeToggle } from "@/components/ui/mode-toggle";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { useLogoutMutation } from "@/lib/features/auth/auth.api";
 import { clearAuthenticatedUser } from "@/lib/features/auth/auth.slice";
+import { getApiErrorMessage } from "@/lib/features/api/error";
 import { cn } from "@/lib/utils";
 
 const navigationItems = [
@@ -34,8 +37,7 @@ export function Navbar() {
   const { status: authStatus, isAuthenticated } = useAppSelector(
     (state) => state.auth,
   );
-  const [logout, { isLoading: isLoggingOut, error: logoutError }] =
-    useLogoutMutation();
+  const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
 
   if (authStatus === "idle" || authStatus === "loading") {
     return <NavbarSkeleton />;
@@ -55,8 +57,12 @@ export function Navbar() {
       await logout().unwrap();
       dispatch(clearAuthenticatedUser());
       router.replace("/login");
-    } catch {
-      // The mutation error is rendered next to the logout control.
+    } catch (requestError) {
+      toast.add({
+        type: "error",
+        title: "Unable to log out",
+        description: getApiErrorMessage(requestError, "Please try again."),
+      });
     }
   };
 
@@ -132,11 +138,6 @@ export function Navbar() {
                 <UserShield aria-hidden="true" />
               </Button>
             )}
-            {logoutError && (
-              <p role="alert" className="text-sm text-destructive">
-                Unable to log out. Please try again.
-              </p>
-            )}
           </div>
 
           <CollapsibleTrigger
@@ -184,11 +185,6 @@ export function Navbar() {
                 </Button>
               )}
             </div>
-            {logoutError && (
-              <p role="alert" className="text-sm text-destructive">
-                Unable to log out. Please try again.
-              </p>
-            )}
           </div>
         </CollapsibleContent>
       </Collapsible>
@@ -203,8 +199,8 @@ function NavbarSkeleton() {
         aria-label="Main navigation"
         className="mx-auto flex w-full items-center justify-between px-4 py-3 sm:px-6 lg:px-8"
       >
-        <span className="h-6 w-32 animate-pulse rounded bg-muted" />
-        <span className="h-6 w-24 animate-pulse rounded bg-muted" />
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-6 w-24" />
       </nav>
     </header>
   );

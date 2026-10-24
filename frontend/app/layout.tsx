@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/layout/theme-provider";
 import StoreProvider from "@/components/layout/store-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { AuthInitializer } from "@/components/layout/auth-initializer";
+import { Toaster } from "@/components/ui/toast";
 
 const montserratHeading = Montserrat({
   subsets: ["latin"],
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <AuthInitializer />
             <Navbar />
             {children}
+            <Toaster />
             <footer className="border-t px-4 py-4 text-center text-sm text-muted-foreground">
               © 2026 UniScope. All rights reserved.
             </footer>

@@ -17,14 +17,15 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { Admin } from "@/types/admin"
 
 interface AdminFormCardProps {
   admin: Admin | null
   isSaving: boolean
   isDeleting: boolean
-  error?: string
-  onSave: (values: { username: string; password: string }) => void
+  isLoading: boolean
+  onSave: (values: { username: string; password: string }) => void | Promise<void>
   onDelete: () => void
 }
 
@@ -32,7 +33,7 @@ export function AdminFormCard({
   admin,
   isSaving,
   isDeleting,
-  error,
+  isLoading,
   onSave,
   onDelete,
 }: AdminFormCardProps) {
@@ -51,44 +52,50 @@ export function AdminFormCard({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form
-          id="admin-form"
-          className="flex flex-col gap-6"
-          onSubmit={(event) => {
-            event.preventDefault()
-            onSave({ username, password })
-          }}
-        >
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="admin-username">Username</FieldLabel>
-              <Input
-                id="admin-username"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                required
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="admin-password">
-                {isEditing ? "New password" : "Password"}
-              </FieldLabel>
-              <Input
-                id="admin-password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required={!isEditing}
-              />
-              {isEditing && (
-                <FieldDescription>
-                  Leave blank to keep the current password.
-                </FieldDescription>
-              )}
-            </Field>
-          </FieldGroup>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-        </form>
+        {isLoading ? (
+          <div className="flex flex-col gap-6" aria-label="Loading admin form">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : (
+          <form
+            id="admin-form"
+            className="flex flex-col gap-6"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void onSave({ username: username.trim(), password })
+            }}
+          >
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="admin-username">Username</FieldLabel>
+                <Input
+                  id="admin-username"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  required
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="admin-password">
+                  {isEditing ? "New password" : "Password"}
+                </FieldLabel>
+                <Input
+                  id="admin-password"
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required={!isEditing}
+                />
+                {isEditing && (
+                  <FieldDescription>
+                    Leave blank to keep the current password.
+                  </FieldDescription>
+                )}
+              </Field>
+            </FieldGroup>
+          </form>
+        )}
       </CardContent>
       <CardFooter className="justify-end gap-3">
         {isEditing && (
@@ -96,7 +103,15 @@ export function AdminFormCard({
             type="button"
             variant="destructive"
             disabled={isSaving || isDeleting}
-            onClick={onDelete}
+            onClick={() => {
+              if (
+                window.confirm(
+                  "Delete this administrator? This action cannot be undone.",
+                )
+              ) {
+                onDelete()
+              }
+            }}
           >
             Delete
           </Button>

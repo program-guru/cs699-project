@@ -2,16 +2,10 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+This frontend uses npm. From this directory, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -23,15 +17,17 @@ The admin login uses the backend's `access_token` HTTP-only cookie. Set
 `http://localhost:8000`:
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000 pnpm dev
+NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
 ```
 
 Requests use RTK Query with credentials enabled. The admin `proxy.ts` redirects
 requests without an `access_token` cookie to `/login`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The homepage is implemented in `app/(site)/page.tsx`. The page auto-updates as
+you edit files.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts)
+to automatically optimize and load Inter and Montserrat.
 
 ## Learn More
 
