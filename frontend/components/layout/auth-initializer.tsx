@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 import { useAppDispatch } from "@/lib/hooks";
 import { useGetMeQuery } from "@/lib/features/auth/auth.api";
@@ -12,6 +13,7 @@ import {
 
 export function AuthInitializer() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { data, isLoading, isError } = useGetMeQuery();
 
   useEffect(() => {
@@ -19,10 +21,16 @@ export function AuthInitializer() {
       dispatch(setAuthLoading());
     } else if (data?.data) {
       dispatch(setAuthenticatedUser(data.data));
-    } else if (isError) {
+    } else if (isError || !data?.data) {
       dispatch(setUnauthenticated());
     }
   }, [data, dispatch, isError, isLoading]);
+
+  useEffect(() => {
+    const handleAuthExpired = () => router.replace("/login");
+    window.addEventListener("auth-expired", handleAuthExpired);
+    return () => window.removeEventListener("auth-expired", handleAuthExpired);
+  }, [router]);
 
   return null;
 }

@@ -4,6 +4,7 @@ import type {
   AuthRequest,
   CurrentUserResponse,
 } from '@/types/auth'
+import type { DTO } from '@/types/dto'
 
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -14,7 +15,7 @@ export const authApi = baseApi.injectEndpoints({
         body: credentials,
       }),
     }),
-    logout: builder.mutation<AuthResponse, void>({
+    logout: builder.mutation<DTO<null>, void>({
       query: () => ({
         url: '/auth/logout',
         method: 'POST',

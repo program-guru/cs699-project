@@ -1,5 +1,5 @@
 export interface DTO<T> {
   success: boolean
   message: string
-  data: T
+  data: T | null
 }
