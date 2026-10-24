@@ -1,7 +1,7 @@
 import type { DTO } from '@/types/dto'
 
 export interface Admin {
-  id: string | null
+  _id: string
   username: string
 }
 

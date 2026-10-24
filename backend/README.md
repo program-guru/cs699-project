@@ -74,8 +74,8 @@ The following admin-management endpoints require the `access_token` cookie
 created by login:
 
 - `POST /admin/` creates an admin.
-- `PUT /admin/{username}` updates an admin's username and password.
-- `DELETE /admin/{username}` deletes an admin.
+- `PUT /admin/{admin_id}` updates an admin's username and password.
+- `DELETE /admin/{admin_id}` deletes an admin.
 
 Deleting the currently authenticated admin also clears its authentication
 cookie and ends the session.

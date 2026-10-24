@@ -19,8 +19,8 @@ import type { AdminRequest } from "@/types/admin"
 export default function AdminPage() {
   const router = useRouter()
   const dispatch = useAppDispatch()
-  const authenticatedUserId = useAppSelector((state) => state.auth.user?.id)
-  const [selectedUsername, setSelectedUsername] = useState<string | null>(null)
+  const authenticatedUserId = useAppSelector((state) => state.auth.user?._id)
+  const [selectedAdminId, setSelectedAdminId] = useState<string | null>(null)
   const [error, setError] = useState<string>()
   const { data, isLoading } = useGetAdminsQuery()
   const [createAdmin, createState] = useCreateAdminMutation()
@@ -28,20 +28,20 @@ export default function AdminPage() {
   const [deleteAdmin, deleteState] = useDeleteAdminMutation()
   const [logout] = useLogoutMutation()
   const selectedAdmin =
-    data?.data.find((admin) => admin.username === selectedUsername) ?? null
+    data?.data.find((admin) => admin._id === selectedAdminId) ?? null
 
   const save = async (values: AdminRequest) => {
     setError(undefined)
     try {
       if (selectedAdmin) {
         await updateAdmin({
-          username: selectedAdmin.username,
+          adminId: selectedAdmin._id,
           admin: { username: values.username, ...(values.password && { password: values.password }) },
         }).unwrap()
-        setSelectedUsername(values.username)
+        setSelectedAdminId(selectedAdmin._id)
       } else {
         await createAdmin(values).unwrap()
-        setSelectedUsername(null)
+        setSelectedAdminId(null)
       }
     } catch (requestError) {
       setError(
@@ -57,14 +57,14 @@ export default function AdminPage() {
     if (!selectedAdmin) return
     setError(undefined)
     try {
-      await deleteAdmin(selectedAdmin.username).unwrap()
-      if (selectedAdmin.id === authenticatedUserId) {
+      await deleteAdmin(selectedAdmin._id).unwrap()
+      if (selectedAdmin._id === authenticatedUserId) {
         await logout().unwrap()
         dispatch(clearAuthenticatedUser())
         router.replace("/login")
         return
       }
-      setSelectedUsername(null)
+      setSelectedAdminId(null)
     } catch (requestError) {
       setError(getApiErrorMessage(requestError, "Unable to delete admin."))
     }
@@ -75,14 +75,18 @@ export default function AdminPage() {
       <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
         <AdminSearchCard
           admins={data?.data ?? []}
-          selectedUsername={selectedUsername}
-          onSelect={(username) => {
+          selectedAdminId={selectedAdminId}
+          onSelect={(adminId) => {
             setError(undefined)
-            setSelectedUsername(username)
+            setSelectedAdminId(adminId)
           }}
         />
         <AdminFormCard
-          key={selectedUsername ?? "new"}
+          key={
+            selectedAdmin
+              ? `${selectedAdmin._id}:${selectedAdmin.username}`
+              : selectedAdminId ?? "new"
+          }
           admin={selectedAdmin}
           isSaving={createState.isLoading || updateState.isLoading || isLoading}
           isDeleting={deleteState.isLoading}

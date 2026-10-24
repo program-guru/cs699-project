@@ -22,18 +22,18 @@ export const adminApi = baseApi.injectEndpoints({
     }),
     updateAdmin: builder.mutation<
       AdminMutationResponse,
-      { username: string; admin: AdminUpdateRequest }
+      { adminId: string; admin: AdminUpdateRequest }
     >({
-      query: ({ username, admin }) => ({
-        url: `/admin/${encodeURIComponent(username)}`,
+      query: ({ adminId, admin }) => ({
+        url: `/admin/${encodeURIComponent(adminId)}`,
         method: 'PUT',
         body: admin,
       }),
       invalidatesTags: ['Admin'],
     }),
     deleteAdmin: builder.mutation<AdminMutationResponse, string>({
-      query: (username) => ({
-        url: `/admin/${encodeURIComponent(username)}`,
+      query: (adminId) => ({
+        url: `/admin/${encodeURIComponent(adminId)}`,
         method: 'DELETE',
       }),
       invalidatesTags: ['Admin'],

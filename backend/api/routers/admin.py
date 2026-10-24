@@ -41,14 +41,14 @@ async def create_admin_account(
     return DTO(success=True, message="Admin created successfully")
 
 
-@router.put("/{username}", response_model=DTO[None])
+@router.put("/{admin_id}", response_model=DTO[None])
 async def update_admin_account(
     database: DBSession,
-    username: str,
+    admin_id: str,
     admin: AdminUpdate,
     _: CurrentAdmin,
 ) -> DTO[None]:
-    update_result = await update_admin(database, username, admin)
+    update_result = await update_admin(database, admin_id, admin)
     if update_result == "protected":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -68,13 +68,13 @@ async def update_admin_account(
     return DTO(success=True, message="Admin updated successfully")
 
 
-@router.delete("/{username}", response_model=DTO[None])
+@router.delete("/{admin_id}", response_model=DTO[None])
 async def delete_admin_account(
     database: DBSession,
-    username: str,
+    admin_id: str,
     _: CurrentAdmin,
 ) -> DTO[None]:
-    delete_result = await delete_admin(database, username)
+    delete_result = await delete_admin(database, admin_id)
     if delete_result == "protected":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

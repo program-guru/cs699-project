@@ -1,5 +1,6 @@
 from typing import Literal
 
+from bson import ObjectId
 from core.config import settings
 from models.admin import Admin, AdminRead, AdminUpdate
 from pymongo.asynchronous.database import AsyncDatabase
@@ -53,9 +54,16 @@ async def list_admins(database: AsyncDatabase) -> list[AdminRead]:
 
 
 async def update_admin(
-    database: AsyncDatabase, username: str, admin: AdminUpdate
+    database: AsyncDatabase, admin_id: str, admin: AdminUpdate
 ) -> Literal["updated", "not_found", "duplicate", "protected"]:
-    if username == settings.ROOT_USERNAME:
+    if not ObjectId.is_valid(admin_id):
+        return "not_found"
+
+    object_id = ObjectId(admin_id)
+    existing_admin = await database["admins"].find_one({"_id": object_id})
+    if existing_admin is None:
+        return "not_found"
+    if existing_admin["username"] == settings.ROOT_USERNAME:
         return "protected"
 
     update = {"username": admin.username}
@@ -64,7 +72,7 @@ async def update_admin(
 
     try:
         result = await database["admins"].update_one(
-            {"username": username},
+            {"_id": object_id},
             {"$set": update},
         )
     except DuplicateKeyError:
@@ -74,10 +82,17 @@ async def update_admin(
 
 
 async def delete_admin(
-    database: AsyncDatabase, username: str
+    database: AsyncDatabase, admin_id: str
 ) -> Literal["deleted", "not_found", "protected"]:
-    if username == settings.ROOT_USERNAME:
+    if not ObjectId.is_valid(admin_id):
+        return "not_found"
+
+    object_id = ObjectId(admin_id)
+    existing_admin = await database["admins"].find_one({"_id": object_id})
+    if existing_admin is None:
+        return "not_found"
+    if existing_admin["username"] == settings.ROOT_USERNAME:
         return "protected"
 
-    result = await database["admins"].delete_one({"username": username})
+    result = await database["admins"].delete_one({"_id": object_id})
     return "deleted" if result.deleted_count > 0 else "not_found"

@@ -20,13 +20,13 @@ import type { Admin } from "@/types/admin"
 
 interface AdminSearchCardProps {
   admins: Admin[]
-  selectedUsername: string | null
-  onSelect: (username: string | null) => void
+  selectedAdminId: string | null
+  onSelect: (adminId: string | null) => void
 }
 
 export function AdminSearchCard({
   admins,
-  selectedUsername,
+  selectedAdminId,
   onSelect,
 }: AdminSearchCardProps) {
   return (
@@ -44,14 +44,15 @@ export function AdminSearchCard({
               <CommandGroup>
                 {admins.map((admin) => (
                   <CommandItem
-                    key={admin.id ?? admin.username}
-                    value={admin.username}
-                    data-checked={selectedUsername === admin.username}
+                    key={admin._id}
+                    value={admin._id}
+                    keywords={[admin.username]}
+                    data-checked={selectedAdminId === admin._id}
                     onSelect={() =>
                       onSelect(
-                        selectedUsername === admin.username
+                        selectedAdminId === admin._id
                           ? null
-                          : admin.username,
+                          : admin._id,
                       )
                     }
                   >
