@@ -1,7 +1,9 @@
 from datetime import UTC, datetime
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, HttpUrl
+
+PyObjectId = Annotated[str, BeforeValidator(str)]
 
 
 class Course(BaseModel):
@@ -52,3 +54,20 @@ class Course(BaseModel):
             }
         },
     )
+
+
+class CourseRead(Course):
+    id: PyObjectId | None = Field(default=None, alias="_id")
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True,
+    )
+
+
+class CoursePage(BaseModel):
+    courses: list[CourseRead]
+    page: int
+    page_size: int
+    total: int
+    total_pages: int

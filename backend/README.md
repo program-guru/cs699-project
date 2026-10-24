@@ -104,6 +104,25 @@ standalone MongoDB deployment does not support transactions; in that
 configuration the refresh uses a delete-then-insert sequence instead. Use a
 replica set for atomic refreshes.
 
+## Course API
+
+Course reads are public:
+
+- `GET /courses/` lists courses with `page` (default `1`) and `page_size`
+  (default `20`, maximum `100`) pagination parameters. It also supports
+  optional `college_id` and `department_id` filters. The response includes
+  `courses`, `page`, `page_size`, `total`, and `total_pages`.
+- `GET /courses/{course_id}` retrieves one course by its MongoDB ID.
+
+Course writes require the authenticated admin cookie:
+
+- `POST /courses/` creates a course.
+- `PUT /courses/{course_id}` replaces a course.
+- `DELETE /courses/{course_id}` deletes a course.
+
+Course responses use the standard `DTO` envelope and include the MongoDB
+document ID as `_id`.
+
 ## Response format
 
 Successful and error responses use the `DTO` envelope:
