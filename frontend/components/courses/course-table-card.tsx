@@ -43,7 +43,7 @@ import {
 import { useGetCoursesQuery } from "@/lib/features/courses/courses.api";
 import type { Course } from "@/types/course";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 
 function displayValue(value: unknown) {
   if (value === null || value === undefined || value === "") return "—";
@@ -76,6 +76,7 @@ export function CourseTableCard({
   const [appliedSearch, setAppliedSearch] = useState("");
 
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const updateCollege = (value: string | null) => {
     setCollege(value ?? "all");
@@ -86,6 +87,14 @@ export function CourseTableCard({
   const updateDepartment = (value: string | null) => {
     setDepartment(value ?? "all");
     setPage(1);
+  };
+
+  const updatePageSize = (value: string | null) => {
+    const nextPageSize = Number(value);
+    if (PAGE_SIZE_OPTIONS.some((option) => option === nextPageSize)) {
+      setPageSize(nextPageSize);
+      setPage(1);
+    }
   };
 
   const clearSearch = () => {
@@ -169,10 +178,10 @@ export function CourseTableCard({
     [college, department, courses, appliedSearch],
   );
 
-  const totalPages = Math.max(1, Math.ceil(filteredCourses.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filteredCourses.length / pageSize));
   const visibleCourses = filteredCourses.slice(
-    (page - 1) * PAGE_SIZE,
-    page * PAGE_SIZE,
+    (page - 1) * pageSize,
+    page * pageSize,
   );
 
   const selectSuggestion = (course: Course) => {
@@ -338,10 +347,43 @@ export function CourseTableCard({
                 </TableBody>
               </Table>
             </div>
-            <div className="flex shrink-0 items-center justify-between gap-4">
+            <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="courses-page-size"
+                  className="text-xs text-muted-foreground"
+                >
+                  Rows per page
+                </label>
+                <Select
+                  value={String(pageSize)}
+                  onValueChange={updatePageSize}
+                >
+                  <SelectTrigger
+                    id="courses-page-size"
+                    aria-label="Rows per page"
+                    className="h-8 w-20"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {PAGE_SIZE_OPTIONS.map((option) => (
+                        <SelectItem key={option} value={String(option)}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
               <p className="text-xs text-muted-foreground">
-                {filteredCourses.length} course
-                {filteredCourses.length === 1 ? "" : "s"}
+                {filteredCourses.length === 0
+                  ? "0 courses"
+                  : `${(page - 1) * pageSize + 1}-${Math.min(
+                      page * pageSize,
+                      filteredCourses.length,
+                    )} of ${filteredCourses.length} courses`}
               </p>
               <Pagination className="mx-0 w-auto">
                 <PaginationContent>

@@ -23,7 +23,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
 Requests use RTK Query with credentials enabled. The admin `proxy.ts` redirects
 requests without an `access_token` cookie to `/login`.
 
-The homepage is implemented in `app/(site)/page.tsx`. The page auto-updates as
+The homepage is implemented in `app/page.tsx`. The page auto-updates as
 you edit files.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts)
