@@ -71,3 +71,8 @@ class CoursePage(BaseModel):
     page_size: int
     total: int
     total_pages: int
+
+
+class CourseStats(BaseModel):
+    universities: int
+    courses: int

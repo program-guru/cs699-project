@@ -112,6 +112,8 @@ Course reads are public:
   (default `20`, maximum `100`) pagination parameters. It also supports
   optional `college_id` and `department_id` filters. The response includes
   `courses`, `page`, `page_size`, `total`, and `total_pages`.
+- `GET /courses/stats` returns the total number of courses and distinct
+  universities currently tracked.
 - `GET /courses/{course_id}` retrieves one course by its MongoDB ID.
 
 Course writes require the authenticated admin cookie:
