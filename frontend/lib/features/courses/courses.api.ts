@@ -65,6 +65,7 @@ export const coursesApi = baseApi.injectEndpoints({
 
 export const {
   useGetCoursesQuery,
+  useLazyGetCoursesQuery,
   useGetCourseByIdQuery,
   useCreateCourseMutation,
   useUpdateCourseMutation,

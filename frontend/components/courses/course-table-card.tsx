@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 
 import {
@@ -40,8 +40,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useGetCoursesQuery } from "@/lib/features/courses/courses.api";
-import type { Course } from "@/types/course";
+import {
+  useGetCoursesQuery,
+  useLazyGetCoursesQuery,
+} from "@/lib/features/courses/courses.api";
+import { getApiErrorMessage } from "@/lib/features/api/error";
+import type { Course, CoursePage } from "@/types/course";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 
@@ -65,7 +69,72 @@ export function CourseTableCard({
     page: 1,
     page_size: 100,
   });
-  const courses = useMemo(() => data?.data?.courses ?? [], [data]);
+  const [fetchCoursePage] = useLazyGetCoursesQuery();
+  const [additionalPagesResult, setAdditionalPagesResult] = useState<
+    | { firstPage: CoursePage; courses: Course[] }
+    | { firstPage: CoursePage; error: string }
+    | null
+  >(null);
+
+  useEffect(() => {
+    const firstPage = data?.data;
+    if (!firstPage || firstPage.total_pages <= 1) return;
+
+    let isCurrent = true;
+
+    const loadRemainingPages = async () => {
+      try {
+        const remainingResponses = await Promise.all(
+          Array.from({ length: firstPage.total_pages - 1 }, (_, index) =>
+            fetchCoursePage({ page: index + 2, page_size: 100 }).unwrap(),
+          ),
+        );
+        const remainingCourses = remainingResponses.flatMap((response) => {
+          if (!response.success || !response.data) {
+            throw new Error(response.message || "Unable to load all courses.");
+          }
+          return response.data.courses;
+        });
+
+        if (isCurrent) {
+          setAdditionalPagesResult({
+            firstPage,
+            courses: [...firstPage.courses, ...remainingCourses],
+          });
+        }
+      } catch (requestError) {
+        if (isCurrent) {
+          setAdditionalPagesResult({
+            firstPage,
+            error: getApiErrorMessage(
+              requestError,
+              "Unable to load all courses. Please try again.",
+            ),
+          });
+        }
+      }
+    };
+
+    void loadRemainingPages();
+    return () => {
+      isCurrent = false;
+    };
+  }, [data, fetchCoursePage]);
+  const firstPage = data?.data;
+  const pageResult =
+    additionalPagesResult?.firstPage === firstPage
+      ? additionalPagesResult
+      : null;
+  const courses = useMemo(() => {
+    if (firstPage?.total_pages === 1) return firstPage.courses;
+    if (pageResult && "courses" in pageResult) return pageResult.courses;
+    return [];
+  }, [firstPage, pageResult]);
+  const isLoadingAdditionalPages =
+    Boolean(firstPage && firstPage.total_pages > 1 && !pageResult);
+  const additionalPagesError =
+    pageResult && "error" in pageResult ? pageResult.error : null;
+  const hasAdditionalPagesError = additionalPagesError !== null;
 
   const [college, setCollege] = useState("all");
   const [department, setDepartment] = useState("all");
@@ -288,17 +357,20 @@ export function CourseTableCard({
           )}
         </Command>
 
-        {isLoading && (
+        {(isLoading || isLoadingAdditionalPages) && (
           <p className="py-8 text-center text-muted-foreground">
             Loading courses…
           </p>
         )}
-        {isError && (
+        {(isError || hasAdditionalPagesError) && (
           <p className="py-8 text-center text-destructive">
-            Unable to load courses.
+            {additionalPagesError ?? "Unable to load courses. Please try again."}
           </p>
         )}
-        {!isLoading && !isError && (
+        {!isLoading &&
+          !isLoadingAdditionalPages &&
+          !isError &&
+          !hasAdditionalPagesError && (
           <>
             <div className="min-h-0 flex-1 overflow-y-auto">
               <Table>
