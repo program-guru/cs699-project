@@ -212,16 +212,19 @@ export function CourseTableCard({
     const query = searchInput.trim().toLowerCase();
     if (!query) return [];
     return courses
-      .filter((course) =>
-        [
-          course.college_name,
-          course.department_name,
-          course.course_code,
-          course.title,
-        ].some((value) => displayValue(value).toLowerCase().includes(query)),
+      .filter(
+        (course) =>
+          (college === "all" || course.college_id === college) &&
+          (department === "all" || course.department_id === department) &&
+          [
+            course.college_name,
+            course.department_name,
+            course.course_code,
+            course.title,
+          ].some((value) => displayValue(value).toLowerCase().includes(query)),
       )
       .slice(0, 5);
-  }, [courses, searchInput]);
+  }, [college, courses, department, searchInput]);
 
   // Table filtering: only uses appliedSearch (set on suggestion select / clear),
   // plus the college/department filters.
@@ -254,9 +257,10 @@ export function CourseTableCard({
   );
 
   const selectSuggestion = (course: Course) => {
-    setSearchInput(course.title);
+    setSearchInput("");
     setAppliedSearch(course.title);
     setPage(1);
+    onCourseSelect(course);
   };
 
   return (
@@ -315,7 +319,7 @@ export function CourseTableCard({
           shouldFilter={false}
           className="relative !h-fit w-full shrink-0 overflow-visible border"
         >
-          <div className="relative flex items-center">
+          <div className="relative flex w-full items-center">
             <CommandInput
               placeholder="Search college, department, code, or title..."
               value={searchInput}

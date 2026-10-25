@@ -68,7 +68,7 @@ function CommandInput({
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
   return (
-    <div data-slot="command-input-wrapper" className="p-1">
+    <div data-slot="command-input-wrapper" className="w-full p-1">
       <InputGroup className="border-transparent border-b-input bg-transparent px-3">
         <CommandPrimitive.Input
           data-slot="command-input"
