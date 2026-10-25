@@ -27,7 +27,7 @@ const baseQuery: BaseQueryFn<
 
   if (result.error?.status === 401) {
     api.dispatch(clearAuthenticatedUser())
-    if (typeof window !== "undefined") {
+    if (api.endpoint !== "getMe" && typeof window !== "undefined") {
       window.dispatchEvent(new Event("auth-expired"))
     }
   }
