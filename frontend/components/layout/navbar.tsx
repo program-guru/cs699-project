@@ -27,7 +27,7 @@ const navigationItems = [
 
 const adminNavigationItems = [
   { href: "/admin", label: "Manage Admin" },
-  { href: "/admin/data", label: "View / Edit Data" },
+  { href: "/admin/courses", label: "Manage Courses" },
 ];
 
 export function Navbar() {
