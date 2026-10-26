@@ -1,16 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { Command, CommandInput } from "@/components/ui/command";
 import {
   Card,
   CardContent,
@@ -139,13 +132,19 @@ export function CourseTableCard({
   const [college, setCollege] = useState("all");
   const [department, setDepartment] = useState("all");
 
-  // searchInput drives the suggestion list only.
-  // appliedSearch is what actually filters the table, set when a suggestion is picked.
   const [searchInput, setSearchInput] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
-
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setAppliedSearch(searchInput);
+      setPage(1);
+    }, 200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchInput]);
 
   const updateCollege = (value: string | null) => {
     setCollege(value ?? "all");
@@ -207,27 +206,6 @@ export function CourseTableCard({
       : (departments.find(([id]) => id === department)?.[1] ??
         "All Departments");
 
-  // Suggestions: computed from the raw typed input, not applied to the table.
-  const suggestions = useMemo(() => {
-    const query = searchInput.trim().toLowerCase();
-    if (!query) return [];
-    return courses
-      .filter(
-        (course) =>
-          (college === "all" || course.college_id === college) &&
-          (department === "all" || course.department_id === department) &&
-          [
-            course.college_name,
-            course.department_name,
-            course.course_code,
-            course.title,
-          ].some((value) => displayValue(value).toLowerCase().includes(query)),
-      )
-      .slice(0, 5);
-  }, [college, courses, department, searchInput]);
-
-  // Table filtering: only uses appliedSearch (set on suggestion select / clear),
-  // plus the college/department filters.
   const filteredCourses = useMemo(
     () =>
       courses.filter((course) => {
@@ -256,15 +234,11 @@ export function CourseTableCard({
     page * pageSize,
   );
 
-  const selectSuggestion = (course: Course) => {
-    setSearchInput("");
-    setAppliedSearch(course.title);
-    setPage(1);
-    onCourseSelect(course);
-  };
-
   return (
-    <Card className="flex min-h-0 min-w-0 flex-col xl:col-span-3" size="sm">
+    <Card
+      className="flex h-[min(60rem,calc(100vh-12rem))] min-h-0 min-w-0 flex-col xl:col-span-2"
+      size="sm"
+    >
       <CardHeader className="shrink-0 gap-1">
         <CardTitle>Courses</CardTitle>
         <CardDescription>
@@ -339,26 +313,6 @@ export function CourseTableCard({
               </Button>
             )}
           </div>
-          {searchInput.trim() && (
-            <CommandList className="absolute top-full left-0 z-50 w-full border bg-popover shadow-md">
-              <CommandEmpty>No matching courses.</CommandEmpty>
-              <CommandGroup heading="Matching courses">
-                {suggestions.map((course) => (
-                  <CommandItem
-                    key={course._id}
-                    value={course._id}
-                    onSelect={() => selectSuggestion(course)}
-                  >
-                    <Search aria-hidden="true" />
-                    <span className="truncate">{course.title}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      {displayValue(course.course_code)}
-                    </span>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          )}
         </Command>
 
         {(isLoading || isLoadingAdditionalPages) && (

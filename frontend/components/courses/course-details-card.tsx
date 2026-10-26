@@ -38,7 +38,10 @@ export function CourseDetailsCard({ course }: CourseDetailsCardProps) {
     : [];
 
   return (
-    <Card className="flex min-h-0 min-w-0 flex-col xl:col-span-2" size="sm">
+    <Card
+      className="flex h-[min(60rem,calc(100vh-12rem))] min-h-0 min-w-0 flex-col xl:col-span-1"
+      size="sm"
+    >
       <CardHeader className="shrink-0 gap-1">
         <CardTitle>Course details</CardTitle>
         <CardDescription>
@@ -47,7 +50,7 @@ export function CourseDetailsCard({ course }: CourseDetailsCardProps) {
             : "Select a course from the table"}
         </CardDescription>
       </CardHeader>
-      <CardContent className="min-h-0 flex-1 overflow-hidden">
+      <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {course ? (
           <ScrollArea className="h-full pr-3">
             <dl className="grid gap-3">
@@ -59,7 +62,7 @@ export function CourseDetailsCard({ course }: CourseDetailsCardProps) {
                   <dt className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                     {key.replaceAll("_", " ")}
                   </dt>
-                  <dd className="break-words text-sm">{displayValue(value)}</dd>
+                  <dd className="wrap-break-word text-sm">{displayValue(value)}</dd>
                 </div>
               ))}
             </dl>
