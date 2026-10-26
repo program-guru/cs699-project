@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Plus, Trash2 } from "lucide-react"
 
 import {
   Card,
@@ -53,21 +54,24 @@ export function CourseFormCard({
     college_name: course?.college_name ?? "",
     department_id: course?.department_id ?? "",
     department_name: course?.department_name ?? "",
-    course_code: course?.course_code ?? "",
+    course_code: course?.course_code ?? null,
     title: course?.title ?? "",
-    category: course?.category ?? "",
-    level: course?.level ?? "",
+    category: course?.category ?? null,
+    level: course?.level ?? null,
     credits: course?.credits ?? null,
-    description: course?.description ?? "",
+    description: course?.description ?? null,
     prerequisites: course?.prerequisites ?? [],
-    instructor: course?.instructor ?? "",
-    semester_offered: course?.semester_offered ?? "",
-    syllabus_url: course?.syllabus_url ?? "",
+    instructor: course?.instructor ?? null,
+    semester_offered: course?.semester_offered ?? null,
+    syllabus_url: course?.syllabus_url ?? null,
     source_url: course?.source_url ?? "",
     raw_extra: course?.raw_extra ?? {},
   }))
-  const [rawExtra, setRawExtra] = useState(
-    JSON.stringify(course?.raw_extra ?? {}, null, 2),
+  const [extraFields, setExtraFields] = useState(() =>
+    Object.entries(course?.raw_extra ?? {}).map(([key, value]) => ({
+      key,
+      value: typeof value === "string" ? value : (JSON.stringify(value) ?? ""),
+    })),
   )
   const [rawExtraError, setRawExtraError] = useState<string | null>(null)
 
@@ -102,21 +106,30 @@ export function CourseFormCard({
               className="flex flex-col gap-6 pb-2"
               onSubmit={(event) => {
                 event.preventDefault()
-                let parsedRawExtra: Record<string, unknown>
-                try {
-                  const parsed = JSON.parse(rawExtra)
-                  if (
-                    parsed === null ||
-                    Array.isArray(parsed) ||
-                    typeof parsed !== "object"
-                  ) {
-                    throw new Error("raw_extra must be a JSON object")
+                const parsedRawExtra: Record<string, unknown> = {}
+                const keys = new Set<string>()
+
+                for (const field of extraFields) {
+                  const key = field.key.trim()
+                  if (!key) {
+                    setRawExtraError("Additional field names cannot be empty.")
+                    return
                   }
-                  parsedRawExtra = parsed as Record<string, unknown>
-                } catch (error) {
-                  setRawExtraError(
-                    error instanceof Error ? error.message : "Enter valid JSON.",
-                  )
+                  if (keys.has(key)) {
+                    setRawExtraError(`Duplicate additional field: ${key}`)
+                    return
+                  }
+                  keys.add(key)
+
+                  try {
+                    parsedRawExtra[key] = JSON.parse(field.value)
+                  } catch {
+                    parsedRawExtra[key] = field.value
+                  }
+                }
+
+                if (Object.keys(parsedRawExtra).length !== extraFields.length) {
+                  setRawExtraError("Each additional field must have a unique name.")
                   return
                 }
                 setRawExtraError(null)
@@ -288,37 +301,71 @@ export function CourseFormCard({
                   />
                 </Field>
                 <Field data-invalid={rawExtraError !== null}>
-                  <FieldLabel htmlFor="course-raw-extra">Additional fields (JSON)</FieldLabel>
-                  <Textarea
-                    id="course-raw-extra"
-                    className="min-h-32 font-mono text-xs"
-                    value={rawExtra}
-                    onChange={(event) => {
-                      const nextValue = event.target.value
-                      setRawExtra(nextValue)
-                      try {
-                        const parsed = JSON.parse(nextValue)
-                        if (
-                          parsed === null ||
-                          Array.isArray(parsed) ||
-                          typeof parsed !== "object"
-                        ) {
-                          throw new Error("raw_extra must be a JSON object")
-                        }
-                        update("raw_extra", parsed as Record<string, unknown>)
-                        setRawExtraError(null)
-                      } catch (error) {
-                        setRawExtraError(
-                          error instanceof Error
-                            ? error.message
-                            : "Enter valid JSON.",
-                        )
+                  <div className="flex items-center justify-between gap-3">
+                    <FieldLabel>Additional fields</FieldLabel>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setExtraFields((fields) => [...fields, { key: "", value: "" }])
                       }
-                    }}
-                    aria-invalid={rawExtraError !== null}
-                  />
+                    >
+                      <Plus />
+                      Add field
+                    </Button>
+                  </div>
+                  {extraFields.length > 0 && (
+                    <div className="flex flex-col gap-3">
+                      {extraFields.map((field, index) => (
+                        <div className="flex items-center gap-2" key={index}>
+                          <Input
+                            aria-label={`Additional field ${index + 1} name`}
+                            placeholder="Field name"
+                            value={field.key}
+                            onChange={(event) =>
+                              setExtraFields((fields) =>
+                                fields.map((item, itemIndex) =>
+                                  itemIndex === index
+                                    ? { ...item, key: event.target.value }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
+                          <Input
+                            aria-label={`Additional field ${index + 1} value`}
+                            placeholder='Value (JSON or text)'
+                            value={field.value}
+                            onChange={(event) =>
+                              setExtraFields((fields) =>
+                                fields.map((item, itemIndex) =>
+                                  itemIndex === index
+                                    ? { ...item, value: event.target.value }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Remove additional field ${index + 1}`}
+                            onClick={() =>
+                              setExtraFields((fields) =>
+                                fields.filter((_, itemIndex) => itemIndex !== index),
+                              )
+                            }
+                          >
+                            <Trash2 />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <FieldDescription>
-                    Preserve any source-specific fields as a JSON object.
+                    Values are parsed as JSON when valid; otherwise they are saved as text.
                   </FieldDescription>
                   {rawExtraError && (
                     <p className="text-sm text-destructive">{rawExtraError}</p>
