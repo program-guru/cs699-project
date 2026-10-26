@@ -43,8 +43,21 @@ export function Navbar() {
     return <NavbarSkeleton />;
   }
 
-  const isActive = (href: string) =>
-    href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = (href: string) => {
+    if (href === "/") {
+      return pathname === href;
+    }
+
+    const matchesPath = (candidate: string) =>
+      pathname === candidate || pathname.startsWith(`${candidate}/`);
+
+    return (
+      matchesPath(href) &&
+      ![...navigationItems, ...adminNavigationItems].some(
+        (item) => item.href !== href && item.href.length > href.length && matchesPath(item.href),
+      )
+    );
+  };
 
   const linkClassName = (href: string) =>
     cn(
