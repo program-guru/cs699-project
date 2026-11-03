@@ -6,11 +6,11 @@ import { PlatformStatsSkeleton } from "@/components/home/platform-stats-skeleton
 
 export default function Home() {
   return (
-    <main className="flex-1">
+    <main className="flex min-h-0 flex-1 flex-col">
       <Hero />
       <section
         aria-label="Platform statistics"
-        className="mx-auto grid w-full max-w-7xl gap-4 px-4 pb-12 sm:grid-cols-3 sm:px-6 sm:pb-16 lg:px-8 lg:pb-24"
+        className="mx-auto grid w-full max-w-7xl shrink-0 gap-4 pb-8 sm:grid-cols-3 sm:pb-10 lg:pb-8"
       >
         <Suspense
           fallback={<PlatformStatsSkeleton />}

@@ -50,7 +50,7 @@ export function Hero() {
   }, [carouselApi]);
 
   return (
-    <section className="mx-auto grid w-full max-w-7xl items-center gap-12 px-4 py-12 sm:gap-16 sm:px-6 sm:py-16 lg:grid-cols-[1.5fr_1fr] lg:gap-8 lg:px-8 lg:py-24">
+    <section className="mx-auto grid w-full max-w-7xl min-h-0 items-center gap-12 py-10 sm:gap-16 sm:py-10 lg:flex-1 lg:grid-cols-[1.5fr_1fr] lg:gap-8 lg:py-5">
       
       {/* Left Column: Text Content */}
       <div className="flex flex-col items-start gap-6">
@@ -81,7 +81,7 @@ export function Hero() {
       <div className="relative min-w-0 w-full">
         <Carousel
           aria-label="Featured universities"
-          className="mx-auto h-96 w-full max-w-md sm:h-112 sm:max-w-lg lg:h-128 lg:max-w-2xl"
+          className="mx-auto h-96 w-full max-w-md sm:h-112 sm:max-w-lg lg:h-[min(32rem,calc(100vh-22rem))] lg:max-h-128 lg:max-w-2xl"
           opts={{ align: "start", loop: true }}
           orientation="vertical"
           setApi={setCarouselApi}
