@@ -22,6 +22,7 @@ async def get_courses(
     database: DBSession,
     college_id: Annotated[str | None, Query()] = None,
     department_id: Annotated[str | None, Query()] = None,
+    search: Annotated[str | None, Query()] = None,
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
 ) -> DTO[CoursePage]:
@@ -32,6 +33,7 @@ async def get_courses(
             database,
             college_id,
             department_id,
+            search,
             page,
             page_size,
         ),

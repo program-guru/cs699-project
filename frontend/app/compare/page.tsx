@@ -151,15 +151,18 @@ export default function ComparePage() {
   const [courseB, setCourseB] = useState<Course | null>(null);
 
   const firstPage = data?.data ?? null;
+  const totalPages = firstPage
+    ? Math.ceil(firstPage.total / firstPage.page_size)
+    : 0;
 
   useEffect(() => {
-    if (!firstPage || firstPage.total_pages <= 1) return;
+    if (!firstPage || totalPages <= 1) return;
 
     let isCurrent = true;
     const loadRemainingPages = async () => {
       try {
         const responses = await Promise.all(
-          Array.from({ length: firstPage.total_pages - 1 }, (_, index) =>
+          Array.from({ length: totalPages - 1 }, (_, index) =>
             fetchCoursePage({ page: index + 2, page_size: 100 }).unwrap(),
           ),
         );
@@ -193,17 +196,17 @@ export default function ComparePage() {
     return () => {
       isCurrent = false;
     };
-  }, [fetchCoursePage, firstPage]);
+  }, [fetchCoursePage, firstPage, totalPages]);
 
   const pageResult =
     loadedCourses?.firstPage === firstPage ? loadedCourses : null;
   const courses = useMemo(() => {
-    if (firstPage?.total_pages === 1) return firstPage.courses;
+    if (firstPage && totalPages === 1) return firstPage.courses;
     if (pageResult && "courses" in pageResult) return pageResult.courses;
     return [];
-  }, [firstPage, pageResult]);
+  }, [firstPage, pageResult, totalPages]);
   const isLoadingRemainingPages = Boolean(
-    firstPage && firstPage.total_pages > 1 && !pageResult,
+    firstPage && totalPages > 1 && !pageResult,
   );
   const pageError =
     pageResult && "error" in pageResult ? pageResult.error : null;

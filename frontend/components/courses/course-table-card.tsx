@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, SearchX, X } from "lucide-react";
 
 import { Command, CommandInput } from "@/components/ui/command";
 import {
@@ -12,6 +12,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import {
   Pagination,
   PaginationContent,
@@ -33,12 +40,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  useGetCoursesQuery,
-  useLazyGetCoursesQuery,
-} from "@/lib/features/courses/courses.api";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast";
 import { getApiErrorMessage } from "@/lib/features/api/error";
-import type { Course, CoursePage } from "@/types/course";
+import { useGetCoursesQuery } from "@/lib/features/courses/courses.api";
+import type { Course } from "@/types/course";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 
@@ -58,84 +64,40 @@ export function CourseTableCard({
   selectedCourse,
   onCourseSelect,
 }: CourseTableCardProps) {
-  const { data, isLoading, isError } = useGetCoursesQuery({
-    page: 1,
-    page_size: 100,
-  });
-  const [fetchCoursePage] = useLazyGetCoursesQuery();
-  const [additionalPagesResult, setAdditionalPagesResult] = useState<
-    | { firstPage: CoursePage; courses: Course[] }
-    | { firstPage: CoursePage; error: string }
-    | null
-  >(null);
-
-  useEffect(() => {
-    const firstPage = data?.data;
-    if (!firstPage || firstPage.total_pages <= 1) return;
-
-    let isCurrent = true;
-
-    const loadRemainingPages = async () => {
-      try {
-        const remainingResponses = await Promise.all(
-          Array.from({ length: firstPage.total_pages - 1 }, (_, index) =>
-            fetchCoursePage({ page: index + 2, page_size: 100 }).unwrap(),
-          ),
-        );
-        const remainingCourses = remainingResponses.flatMap((response) => {
-          if (!response.success || !response.data) {
-            throw new Error(response.message || "Unable to load all courses.");
-          }
-          return response.data.courses;
-        });
-
-        if (isCurrent) {
-          setAdditionalPagesResult({
-            firstPage,
-            courses: [...firstPage.courses, ...remainingCourses],
-          });
-        }
-      } catch (requestError) {
-        if (isCurrent) {
-          setAdditionalPagesResult({
-            firstPage,
-            error: getApiErrorMessage(
-              requestError,
-              "Unable to load all courses. Please try again.",
-            ),
-          });
-        }
-      }
-    };
-
-    void loadRemainingPages();
-    return () => {
-      isCurrent = false;
-    };
-  }, [data, fetchCoursePage]);
-  const firstPage = data?.data;
-  const pageResult =
-    additionalPagesResult?.firstPage === firstPage
-      ? additionalPagesResult
-      : null;
-  const courses = useMemo(() => {
-    if (firstPage?.total_pages === 1) return firstPage.courses;
-    if (pageResult && "courses" in pageResult) return pageResult.courses;
-    return [];
-  }, [firstPage, pageResult]);
-  const isLoadingAdditionalPages =
-    Boolean(firstPage && firstPage.total_pages > 1 && !pageResult);
-  const additionalPagesError =
-    pageResult && "error" in pageResult ? pageResult.error : null;
-  const hasAdditionalPagesError = additionalPagesError !== null;
-
   const [college, setCollege] = useState("all");
   const [department, setDepartment] = useState("all");
-
   const [searchInput, setSearchInput] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  const {
+    data,
+    error,
+    isLoading,
+    isError,
+  } = useGetCoursesQuery({
+    college_id: college === "all" ? undefined : college,
+    department_id: department === "all" ? undefined : department,
+    search: appliedSearch || undefined,
+    page,
+    page_size: pageSize,
+  });
+  const coursePage = data?.data;
+  const courses = useMemo(() => coursePage?.courses ?? [], [coursePage]);
+
+  useEffect(() => {
+    if (!isError) return;
+
+    toast.add({
+      type: "error",
+      title: "Unable to load courses",
+      description: getApiErrorMessage(
+        error,
+        "Unable to load courses. Please try again.",
+      ),
+    });
+  }, [error, isError]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -206,33 +168,9 @@ export function CourseTableCard({
       : (departments.find(([id]) => id === department)?.[1] ??
         "All Departments");
 
-  const filteredCourses = useMemo(
-    () =>
-      courses.filter((course) => {
-        const matchesSearch = [
-          course.college_name,
-          course.department_name,
-          course.course_code,
-          course.title,
-        ].some((value) =>
-          displayValue(value)
-            .toLowerCase()
-            .includes(appliedSearch.toLowerCase()),
-        );
-        return (
-          matchesSearch &&
-          (college === "all" || course.college_id === college) &&
-          (department === "all" || course.department_id === department)
-        );
-      }),
-    [college, department, courses, appliedSearch],
-  );
-
-  const totalPages = Math.max(1, Math.ceil(filteredCourses.length / pageSize));
-  const visibleCourses = filteredCourses.slice(
-    (page - 1) * pageSize,
-    page * pageSize,
-  );
+  const total = coursePage?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const visibleCourses = courses;
 
   return (
     <Card
@@ -291,7 +229,7 @@ export function CourseTableCard({
 
         <Command
           shouldFilter={false}
-          className="relative !h-fit w-full shrink-0 overflow-visible border"
+          className="relative h-fit! w-full shrink-0 overflow-visible border"
         >
           <div className="relative flex w-full items-center">
             <CommandInput
@@ -315,43 +253,34 @@ export function CourseTableCard({
           </div>
         </Command>
 
-        {(isLoading || isLoadingAdditionalPages) && (
-          <p className="py-8 text-center text-muted-foreground">
-            Loading courses…
-          </p>
-        )}
-        {(isError || hasAdditionalPagesError) && (
-          <p className="py-8 text-center text-destructive">
-            {additionalPagesError ?? "Unable to load courses. Please try again."}
-          </p>
-        )}
-        {!isLoading &&
-          !isLoadingAdditionalPages &&
-          !isError &&
-          !hasAdditionalPagesError && (
+        {isLoading && <CourseTableSkeleton />}
+        {!isLoading && !isError && (
           <>
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>College</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Course Code</TableHead>
-                    <TableHead>Title</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {visibleCourses.length === 0 ? (
+            {visibleCourses.length === 0 ? (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <SearchX aria-hidden="true" />
+                  </EmptyMedia>
+                  <EmptyTitle>No courses found</EmptyTitle>
+                  <EmptyDescription>
+                    Try adjusting your search or filters to find a course.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            ) : (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell
-                        className="py-8 text-center text-muted-foreground"
-                        colSpan={4}
-                      >
-                        No courses match the selected filters.
-                      </TableCell>
+                      <TableHead>College</TableHead>
+                      <TableHead>Department</TableHead>
+                      <TableHead>Course Code</TableHead>
+                      <TableHead>Title</TableHead>
                     </TableRow>
-                  ) : (
-                    visibleCourses.map((course) => (
+                  </TableHeader>
+                  <TableBody>
+                    {visibleCourses.map((course) => (
                       <TableRow
                         key={course._id}
                         aria-selected={selectedCourse?._id === course._id}
@@ -372,11 +301,11 @@ export function CourseTableCard({
                           {course.title}
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
             <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <label
@@ -408,12 +337,12 @@ export function CourseTableCard({
                 </Select>
               </div>
               <p className="text-xs text-muted-foreground">
-                {filteredCourses.length === 0
+                {total === 0
                   ? "0 courses"
                   : `${(page - 1) * pageSize + 1}-${Math.min(
                       page * pageSize,
-                      filteredCourses.length,
-                    )} of ${filteredCourses.length} courses`}
+                      total,
+                    )} of ${total} courses`}
               </p>
               <Pagination className="mx-0 w-auto">
                 <PaginationContent>
@@ -451,5 +380,33 @@ export function CourseTableCard({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function CourseTableSkeleton() {
+  return (
+    <div className="min-h-0 flex-1 overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>College</TableHead>
+            <TableHead>Department</TableHead>
+            <TableHead>Course Code</TableHead>
+            <TableHead>Title</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: 8 }, (_, index) => (
+            <TableRow key={index}>
+              {Array.from({ length: 4 }, (_, cellIndex) => (
+                <TableCell key={cellIndex}>
+                  <Skeleton className="h-4 w-full" />
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

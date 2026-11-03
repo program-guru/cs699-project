@@ -1,4 +1,5 @@
 import asyncio
+import re
 from typing import Literal
 
 from bson import ObjectId
@@ -25,14 +26,23 @@ async def list_courses(
     database: AsyncDatabase,
     college_id: str | None = None,
     department_id: str | None = None,
+    search: str | None = None,
     page: int = 1,
     page_size: int = 20,
 ) -> CoursePage:
-    filters: dict[str, str] = {}
+    filters: dict[str, object] = {}
     if college_id is not None:
         filters["college_id"] = college_id
     if department_id is not None:
         filters["department_id"] = department_id
+    if search:
+        search_pattern = re.escape(search)
+        filters["$or"] = [
+            {"college_name": {"$regex": search_pattern, "$options": "i"}},
+            {"department_name": {"$regex": search_pattern, "$options": "i"}},
+            {"course_code": {"$regex": search_pattern, "$options": "i"}},
+            {"title": {"$regex": search_pattern, "$options": "i"}},
+        ]
 
     collection = database["courses"]
     total = await collection.count_documents(filters)
@@ -49,7 +59,6 @@ async def list_courses(
         page=page,
         page_size=page_size,
         total=total,
-        total_pages=(total + page_size - 1) // page_size,
     )
 
 

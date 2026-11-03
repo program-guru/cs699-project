@@ -70,7 +70,6 @@ class CoursePage(BaseModel):
     page: int
     page_size: int
     total: int
-    total_pages: int
 
 
 class CourseStats(BaseModel):

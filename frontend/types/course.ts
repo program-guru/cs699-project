@@ -28,7 +28,6 @@ export interface CoursePage {
   page: number
   page_size: number
   total: number
-  total_pages: number
 }
 
 export type CourseStats = {
@@ -44,6 +43,7 @@ export type CourseStatsResponse = DTO<CourseStats>
 export interface CourseQueryParams {
   college_id?: string
   department_id?: string
+  search?: string
   page?: number
   page_size?: number
 }
