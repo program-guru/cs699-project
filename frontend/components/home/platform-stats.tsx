@@ -4,7 +4,7 @@ import type { CourseStatsResponse } from "@/types/course"
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
 
 async function getPlatformStats(): Promise<NonNullable<CourseStatsResponse["data"]>> {
-  const response = await fetch(`${apiUrl}/courses/stats`, {
+  const response = await fetch(`${apiUrl}/misc/stats`, {
     next: { revalidate: 60 },
   })
 

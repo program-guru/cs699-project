@@ -70,8 +70,3 @@ class CoursePage(BaseModel):
     page: int
     page_size: int
     total: int
-
-
-class CourseStats(BaseModel):
-    universities: int
-    courses: int

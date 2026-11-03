@@ -9,6 +9,7 @@ from api.exception_handlers import (
 from api.routers.admin import router as admin_router
 from api.routers.auth import router as auth_router
 from api.routers.courses import router as courses_router
+from api.routers.misc import router as misc_router
 from api.routers.scrape import router as scrape_router
 from core.config import settings
 from core.database import close_database_connection, get_database
@@ -44,4 +45,5 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(courses_router)
+app.include_router(misc_router)
 app.include_router(scrape_router)

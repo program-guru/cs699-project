@@ -44,6 +44,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { getApiErrorMessage } from "@/lib/features/api/error";
 import { useGetCoursesQuery } from "@/lib/features/courses/courses.api";
+import {
+  useGetCollegesQuery,
+  useGetDepartmentsQuery,
+} from "@/lib/features/misc/misc.api";
 import type { Course } from "@/types/course";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
@@ -83,6 +87,16 @@ export function CourseTableCard({
     page,
     page_size: pageSize,
   });
+  const {
+    data: collegesData,
+    error: collegesError,
+    isError: isCollegesError,
+  } = useGetCollegesQuery();
+  const {
+    data: departmentsData,
+    error: departmentsError,
+    isError: isDepartmentsError,
+  } = useGetDepartmentsQuery(college === "all" ? undefined : college);
   const coursePage = data?.data;
   const courses = useMemo(() => coursePage?.courses ?? [], [coursePage]);
 
@@ -98,6 +112,24 @@ export function CourseTableCard({
       ),
     });
   }, [error, isError]);
+
+  useEffect(() => {
+    if (!isCollegesError && !isDepartmentsError) return;
+
+    toast.add({
+      type: "error",
+      title: "Unable to load course filters",
+      description: getApiErrorMessage(
+        collegesError ?? departmentsError,
+        "Unable to load course filters. Please try again.",
+      ),
+    });
+  }, [
+    collegesError,
+    departmentsError,
+    isCollegesError,
+    isDepartmentsError,
+  ]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -133,39 +165,19 @@ export function CourseTableCard({
     setPage(1);
   };
 
-  const colleges = useMemo(
-    () =>
-      Array.from(
-        new Map(
-          courses.map((course) => [course.college_id, course.college_name]),
-        ),
-      ).sort(([, left], [, right]) => left.localeCompare(right)),
-    [courses],
-  );
-
-  const departments = useMemo(
-    () =>
-      Array.from(
-        new Map(
-          courses
-            .filter(
-              (course) => college === "all" || course.college_id === college,
-            )
-            .map((course) => [course.department_id, course.department_name]),
-        ),
-      ).sort(([, left], [, right]) => left.localeCompare(right)),
-    [college, courses],
-  );
+  const colleges = collegesData?.data ?? [];
+  const departments = departmentsData?.data ?? [];
 
   const selectedCollegeLabel =
     college === "all"
       ? "All Colleges"
-      : (colleges.find(([id]) => id === college)?.[1] ?? "All Colleges");
+      : (colleges.find((option) => option.id === college)?.name ??
+        "All Colleges");
 
   const selectedDepartmentLabel =
     department === "all"
       ? "All Departments"
-      : (departments.find(([id]) => id === department)?.[1] ??
+      : (departments.find((option) => option.id === department)?.name ??
         "All Departments");
 
   const total = coursePage?.total ?? 0;
@@ -197,7 +209,7 @@ export function CourseTableCard({
             <SelectContent>
               <SelectGroup>
                 <SelectItem value="all">All Colleges</SelectItem>
-                {colleges.map(([id, name]) => (
+                {colleges.map(({ id, name }) => (
                   <SelectItem key={id} value={id}>
                     {name}
                   </SelectItem>
@@ -217,7 +229,7 @@ export function CourseTableCard({
             <SelectContent>
               <SelectGroup>
                 <SelectItem value="all">All Departments</SelectItem>
-                {departments.map(([id, name]) => (
+                {departments.map(({ id, name }) => (
                   <SelectItem key={id} value={id}>
                     {name}
                   </SelectItem>

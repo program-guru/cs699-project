@@ -1,13 +1,12 @@
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, status
-from models.course import Course, CoursePage, CourseRead, CourseStats
+from models.course import Course, CoursePage, CourseRead
 from models.dto import DTO
 from service.course import (
     create_course,
     delete_course,
     get_course,
-    get_course_stats,
     list_courses,
     update_course,
 )
@@ -37,15 +36,6 @@ async def get_courses(
             page,
             page_size,
         ),
-    )
-
-
-@router.get("/stats", response_model=DTO[CourseStats])
-async def get_course_statistics(database: DBSession) -> DTO[CourseStats]:
-    return DTO(
-        success=True,
-        message="Course statistics retrieved successfully",
-        data=await get_course_stats(database),
     )
 
 

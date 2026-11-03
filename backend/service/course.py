@@ -1,10 +1,9 @@
-import asyncio
 import re
 from typing import Literal
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from models.course import Course, CoursePage, CourseRead, CourseStats
+from models.course import Course, CoursePage, CourseRead
 from pymongo.asynchronous.database import AsyncDatabase
 
 
@@ -60,15 +59,6 @@ async def list_courses(
         page_size=page_size,
         total=total,
     )
-
-
-async def get_course_stats(database: AsyncDatabase) -> CourseStats:
-    collection = database["courses"]
-    universities, courses = await asyncio.gather(
-        collection.distinct("college_id"),
-        collection.count_documents({}),
-    )
-    return CourseStats(universities=len(universities), courses=courses)
 
 
 async def get_course(database: AsyncDatabase, course_id: str) -> CourseRead | None:
