@@ -1,6 +1,10 @@
 from scrapers.base_scraper import BaseCourseScraper
 from scrapers.strategies.iitb_cse_scraper import IITBCSEScraper
 from scrapers.strategies.iitm_cse_scraper import IITMCSEScraper
+from scrapers.strategies.iith_cse_scraper import IITHCSEScraper
+from scrapers.strategies.iitd_cse_scraper import IITDCSEScraper
+from scrapers.strategies.iitk_cse_scraper import IITKCSEScraper
+from scrapers.strategies.iitgn_cse_scraper import IITGNCSEScraper
 
 
 class ScraperRegistry:
@@ -57,3 +61,7 @@ class ScraperRegistry:
 registry = ScraperRegistry()
 registry.register("iitm", "cse", IITMCSEScraper)
 registry.register("iitb", "cse", IITBCSEScraper)
+registry.register("iith", "cse", IITHCSEScraper)
+registry.register("iitd", "cse", IITDCSEScraper)
+registry.register("iitk", "cse", IITKCSEScraper)
+registry.register("iitgn", "cse", IITGNCSEScraper)
