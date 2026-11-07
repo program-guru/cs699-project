@@ -3,8 +3,9 @@ from typing import Literal
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from models.course import Course, CoursePage, CourseRead
 from pymongo.asynchronous.database import AsyncDatabase
+
+from models.course import Course, CoursePage, CourseRead
 
 
 def _course_id(course_id: str) -> ObjectId | None:
@@ -46,8 +47,7 @@ async def list_courses(
     collection = database["courses"]
     total = await collection.count_documents(filters)
     cursor = (
-        collection
-        .find(filters)
+        collection.find(filters)
         .sort([("college_id", 1), ("department_id", 1), ("course_code", 1)])
         .skip((page - 1) * page_size)
         .limit(page_size)
@@ -93,3 +93,16 @@ async def delete_course(
 
     result = await database["courses"].delete_one({"_id": object_id})
     return "deleted" if result.deleted_count > 0 else "not_found"
+
+
+async def delete_courses_by_source(
+    database: AsyncDatabase,
+    college_id: str,
+    department_id: str | None = None,
+) -> int:
+    filters: dict[str, str] = {"college_id": college_id}
+    if department_id is not None:
+        filters["department_id"] = department_id
+
+    result = await database["courses"].delete_many(filters)
+    return result.deleted_count

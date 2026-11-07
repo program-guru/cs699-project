@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { LoaderCircle, RefreshCw } from "lucide-react"
+import { LoaderCircle, RefreshCw, Trash2 } from "lucide-react"
 
 import {
   Card,
@@ -26,8 +26,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { getApiErrorMessage } from "@/lib/features/api/error"
 import {
+  useDeleteCoursesBySourceMutation,
   useGetScrapeSourcesQuery,
   useScrapeCoursesMutation,
 } from "@/lib/features/scrape/scrape.api"
@@ -38,14 +48,15 @@ type ScrapeScope = "all" | "college" | "department"
 
 const scopeLabels: Record<ScrapeScope, string> = {
   all: "All colleges",
-  college: "One college",
-  department: "One department",
+  college: "College",
+  department: "Department",
 }
 
 export function ScrapeControlCard() {
   const [scope, setScope] = useState<ScrapeScope>("all")
   const [collegeId, setCollegeId] = useState("")
   const [departmentId, setDepartmentId] = useState("")
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const {
     data,
     isLoading: isLoadingSources,
@@ -53,6 +64,7 @@ export function ScrapeControlCard() {
     error: sourcesError,
   } = useGetScrapeSourcesQuery()
   const [scrapeCourses, scrapeState] = useScrapeCoursesMutation()
+  const [deleteCourses, deleteState] = useDeleteCoursesBySourceMutation()
   const sources = data?.data ?? []
   const colleges = [
     ...new Map(
@@ -116,6 +128,7 @@ export function ScrapeControlCard() {
   const canStartScrape =
     !isLoadingSources &&
     !scrapeState.isLoading &&
+    !deleteState.isLoading &&
     sources.length > 0 &&
     (scope === "all" ||
       (Boolean(collegeId) &&
@@ -125,6 +138,43 @@ export function ScrapeControlCard() {
   const selectedDepartment = departments.find(
     (department) => department.department_id === departmentId,
   )
+  const canDeleteCourses =
+    !isLoadingSources &&
+    !scrapeState.isLoading &&
+    !deleteState.isLoading &&
+    scope !== "all" &&
+    Boolean(collegeId) &&
+    (scope === "college" || Boolean(departmentId))
+  const deleteScopeDescription =
+    scope === "college"
+      ? `${selectedCollege?.name ?? "the selected college"} and all its departments`
+      : `${selectedDepartment?.department_name ?? "the selected department"} at ${selectedCollege?.name ?? "the selected college"}`
+
+  const removeCourses = async () => {
+    if (!collegeId || (scope !== "college" && scope !== "department")) return
+
+    try {
+      const request =
+        scope === "college"
+          ? { college_id: collegeId }
+          : { college_id: collegeId, department_id: departmentId }
+      const response = await deleteCourses(request).unwrap()
+      setIsDeleteDialogOpen(false)
+      toast.add({
+        type: "success",
+        title: "Courses deleted",
+        description:
+          response.message ||
+          `Deleted ${response.data ?? 0} course(s) successfully.`,
+      })
+    } catch (requestError) {
+      toast.add({
+        type: "error",
+        title: "Unable to delete courses",
+        description: getApiErrorMessage(requestError, "Please try again."),
+      })
+    }
+  }
 
   return (
     <Card className="h-fit">
@@ -146,17 +196,17 @@ export function ScrapeControlCard() {
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="all">All colleges</SelectItem>
-                  <SelectItem value="college">One college</SelectItem>
+                  <SelectItem value="all">All Colleges</SelectItem>
+                  <SelectItem value="college">College</SelectItem>
                   <SelectItem value="department">
-                    One department
+                   Department
                   </SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
             <FieldDescription>
               {scope === "all"
-                ? "Refresh every registered college and department."
+                ? "Refresh every registered college and department. Choose a college or department to enable deletion."
                 : scope === "college"
                   ? "Refresh all registered departments at one college."
                   : "Refresh one department at a selected college."}
@@ -232,7 +282,7 @@ export function ScrapeControlCard() {
           ) : null}
         </FieldGroup>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex-col items-stretch">
         <Button
           className="w-full"
           disabled={!canStartScrape}
@@ -249,7 +299,55 @@ export function ScrapeControlCard() {
           )}
           {scrapeState.isLoading ? "Starting scrape..." : "Start scrape"}
         </Button>
+        {scope !== "all" && (
+          <Button
+            className="w-full"
+            disabled={!canDeleteCourses}
+            onClick={() => setIsDeleteDialogOpen(true)}
+            variant="destructive"
+          >
+            <Trash2 data-icon="inline-start" aria-hidden="true" />
+            Delete courses
+          </Button>
+        )}
       </CardFooter>
+      <Dialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete courses?</DialogTitle>
+            <DialogDescription>
+              This permanently deletes all courses for {deleteScopeDescription}.
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose
+              render={<Button variant="outline" disabled={deleteState.isLoading} />}
+            >
+              Cancel
+            </DialogClose>
+            <Button
+              disabled={!canDeleteCourses}
+              onClick={removeCourses}
+              variant="destructive"
+            >
+              {deleteState.isLoading ? (
+                <LoaderCircle
+                  className="animate-spin"
+                  data-icon="inline-start"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Trash2 data-icon="inline-start" aria-hidden="true" />
+              )}
+              {deleteState.isLoading ? "Deleting..." : "Delete courses"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

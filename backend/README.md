@@ -120,6 +120,11 @@ deployment does not support transactions; in that configuration the refresh
 uses a delete-then-insert sequence instead. Use a replica set for atomic
 refreshes.
 
+The protected `DELETE /scrape/courses` endpoint permanently deletes courses
+from a college or from one department within a college. Provide `college_id`
+and optionally `department_id` in the JSON body. The response includes the
+number of deleted courses.
+
 ## Course API
 
 Course reads are public:

@@ -8,9 +8,10 @@ from requests import RequestException
 
 from api.dependencies import CurrentAdmin, DBSession
 from models.dto import DTO
-from models.scraper import ScrapeRequest, ScrapeSource
+from models.scraper import DeleteCoursesRequest, ScrapeRequest, ScrapeSource
 from scrapers.base_scraper import BaseCourseScraper
 from scrapers.registry import registry
+from service.course import delete_courses_by_source
 from service.scrape import replace_courses
 
 router = APIRouter(prefix="/scrape", tags=["scrape"])
@@ -107,4 +108,45 @@ async def scrape_courses(
     return DTO(
         success=True,
         message=f"Course refresh started for {len(sources)} source(s)",
+    )
+
+
+@router.delete("/courses", response_model=DTO[int])
+async def delete_scraped_courses(
+    request: DeleteCoursesRequest,
+    database: DBSession,
+    _: CurrentAdmin,
+) -> DTO[int]:
+    sources = registry.available_sources()
+    matching_sources = [
+        source
+        for source in sources
+        if source["college_id"] == request.college_id.lower()
+        and (
+            request.department_id is None
+            or source["department_id"] == request.department_id.lower()
+        )
+    ]
+    if not matching_sources:
+        source_name = "/".join(
+            part
+            for part in (request.college_id, request.department_id)
+            if part is not None
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Unknown source: {source_name}",
+        )
+
+    deleted_count = await delete_courses_by_source(
+        database,
+        college_id=request.college_id.lower(),
+        department_id=(
+            request.department_id.lower() if request.department_id is not None else None
+        ),
+    )
+    return DTO(
+        success=True,
+        message=f"Deleted {deleted_count} course(s)",
+        data=deleted_count,
     )

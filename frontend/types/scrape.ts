@@ -12,5 +12,11 @@ export interface ScrapeRequest {
   department_id?: string
 }
 
+export interface DeleteCoursesRequest {
+  college_id: string
+  department_id?: string
+}
+
 export type ScrapeSourcesResponse = DTO<ScrapeSource[]>
 export type ScrapeResponse = DTO<null>
+export type DeleteCoursesResponse = DTO<number>

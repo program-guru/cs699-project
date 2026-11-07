@@ -1,5 +1,7 @@
 import { baseApi } from "@/lib/features/api/baseApi"
 import type {
+  DeleteCoursesRequest,
+  DeleteCoursesResponse,
   ScrapeRequest,
   ScrapeResponse,
   ScrapeSourcesResponse,
@@ -17,7 +19,22 @@ export const scrapeApi = baseApi.injectEndpoints({
         body: request,
       }),
     }),
+    deleteCoursesBySource: builder.mutation<
+      DeleteCoursesResponse,
+      DeleteCoursesRequest
+    >({
+      query: (request) => ({
+        url: "/scrape/courses",
+        method: "DELETE",
+        body: request,
+      }),
+      invalidatesTags: [{ type: "Course", id: "LIST" }],
+    }),
   }),
 })
 
-export const { useGetScrapeSourcesQuery, useScrapeCoursesMutation } = scrapeApi
+export const {
+  useGetScrapeSourcesQuery,
+  useScrapeCoursesMutation,
+  useDeleteCoursesBySourceMutation,
+} = scrapeApi
