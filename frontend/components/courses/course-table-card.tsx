@@ -53,8 +53,8 @@ import type { Course } from "@/types/course";
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 
 function displayValue(value: unknown) {
-  if (value === null || value === undefined || value === "") return "—";
-  if (Array.isArray(value)) return value.length ? value.join(", ") : "—";
+  if (value === null || value === undefined || value === "") return "-";
+  if (Array.isArray(value)) return value.length ? value.join(", ") : "-";
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
 }

@@ -1,20 +1,30 @@
 import logging
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from models.dto import DTO
-from models.scraper import ScrapeRequest
 from pydantic import ValidationError
 from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.errors import PyMongoError
 from requests import RequestException
+
+from api.dependencies import CurrentAdmin, DBSession
+from models.dto import DTO
+from models.scraper import ScrapeRequest, ScrapeSource
 from scrapers.base_scraper import BaseCourseScraper
 from scrapers.registry import registry
 from service.scrape import replace_courses
 
-from api.dependencies import CurrentAdmin, DBSession
-
 router = APIRouter(prefix="/scrape", tags=["scrape"])
 logger = logging.getLogger(__name__)
+
+
+@router.get("/sources", response_model=DTO[list[ScrapeSource]])
+async def get_scrape_sources(_: CurrentAdmin) -> DTO[list[ScrapeSource]]:
+    sources = [ScrapeSource(**source) for source in registry.available_sources()]
+    return DTO(
+        success=True,
+        message="Available scrape sources",
+        data=sources,
+    )
 
 
 async def _refresh_courses(
@@ -64,17 +74,37 @@ async def scrape_courses(
     background_tasks: BackgroundTasks,
     _: CurrentAdmin,
 ) -> DTO[None]:
-    try:
-        scraper = registry.get(scrapeRequest.college_id, scrapeRequest.department_id)
-    except KeyError as error:
+    sources = [
+        source
+        for source in registry.available_sources()
+        if (
+            scrapeRequest.college_id is None
+            or source["college_id"] == scrapeRequest.college_id.lower()
+        )
+        and (
+            scrapeRequest.department_id is None
+            or source["department_id"] == scrapeRequest.department_id.lower()
+        )
+    ]
+    if not sources:
+        source_name = "/".join(
+            part
+            for part in (
+                scrapeRequest.college_id,
+                scrapeRequest.department_id,
+            )
+            if part is not None
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Unknown source: {scrapeRequest.college_id}/{scrapeRequest.department_id}",
-        ) from error
+            detail=f"Unknown source: {source_name}",
+        )
 
-    background_tasks.add_task(_refresh_courses, scraper, database)
+    for source in sources:
+        scraper = registry.get(source["college_id"], source["department_id"])
+        background_tasks.add_task(_refresh_courses, scraper, database)
 
     return DTO(
         success=True,
-        message="Course refresh started",
+        message=f"Course refresh started for {len(sources)} source(s)",
     )

@@ -84,25 +84,41 @@ All admin passwords are hashed before being stored.
 
 ## Course scraping
 
-The protected `POST /scrape/` endpoint starts a background refresh for a
-registered source and returns `202 Accepted`. The background task scrapes and
-validates the source, then replaces the matching documents in the `courses`
-collection. A valid `access_token` cookie is required:
+The protected `GET /scrape/sources` endpoint lists registered scrape sources.
+The protected `POST /scrape/` endpoint starts background refreshes and returns
+`202 Accepted`. A valid `access_token` cookie is required for both endpoints.
+Omit both IDs to scrape all registered sources, pass only `college_id` to
+scrape every registered department for that college, or pass both IDs to
+scrape one department:
 
 ```bash
+# All registered sources
+curl -b cookies.txt -X POST \
+  http://localhost:8000/scrape/ \
+  -H "Content-Type: application/json" \
+  -d '{}'
+
+# Every registered department at a college
+curl -b cookies.txt -X POST \
+  http://localhost:8000/scrape/ \
+  -H "Content-Type: application/json" \
+  -d '{"college_id":"iitm"}'
+
+# One registered department
 curl -b cookies.txt -X POST \
   http://localhost:8000/scrape/ \
   -H "Content-Type: application/json" \
   -d '{"college_id":"iitm","department_id":"cse"}'
 ```
 
-The registered sources can be found in `scrapers/registry.py`. Other course
-endpoints can read the refreshed documents directly from MongoDB. Refreshes
-use a MongoDB transaction so a failed write does not remove the previous
-course snapshot when MongoDB runs as a replica set or through `mongos`. A
-standalone MongoDB deployment does not support transactions; in that
-configuration the refresh uses a delete-then-insert sequence instead. Use a
-replica set for atomic refreshes.
+Each background task scrapes and validates its source, then replaces the
+matching documents in the `courses` collection. Other course endpoints can
+read the refreshed documents directly from MongoDB. Refreshes use a MongoDB
+transaction so a failed write does not remove the previous course snapshot
+when MongoDB runs as a replica set or through `mongos`. A standalone MongoDB
+deployment does not support transactions; in that configuration the refresh
+uses a delete-then-insert sequence instead. Use a replica set for atomic
+refreshes.
 
 ## Course API
 

@@ -34,12 +34,12 @@ type LoadedCourses =
   | null;
 
 function formatValue(value: unknown): string {
-  if (value === null || value === undefined || value === "") return "—";
+  if (value === null || value === undefined || value === "") return "-";
   if (Array.isArray(value)) {
-    return value.length ? value.map((item) => formatValue(item)).join(", ") : "—";
+    return value.length ? value.map((item) => formatValue(item)).join(", ") : "-";
   }
   if (typeof value === "object") {
-    return Object.keys(value).length ? JSON.stringify(value) : "—";
+    return Object.keys(value).length ? JSON.stringify(value) : "-";
   }
   return String(value);
 }
