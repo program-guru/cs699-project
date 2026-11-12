@@ -22,7 +22,6 @@ import { cn } from "@/lib/utils";
 const navigationItems = [
   { href: "/", label: "Home" },
   { href: "/courses", label: "Courses" },
-  { href: "/compare", label: "Compare" },
 ];
 
 const adminNavigationItems = [
@@ -54,7 +53,10 @@ export function Navbar() {
     return (
       matchesPath(href) &&
       ![...navigationItems, ...adminNavigationItems].some(
-        (item) => item.href !== href && item.href.length > href.length && matchesPath(item.href),
+        (item) =>
+          item.href !== href &&
+          item.href.length > href.length &&
+          matchesPath(item.href),
       )
     );
   };

@@ -1,10 +1,12 @@
 "use client";
 
 import { Check } from "lucide-react";
+import type { ReactNode } from "react";
 
 import {
   Card,
   CardContent,
+  CardFooter,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -25,9 +27,17 @@ const hiddenFields = new Set(["_id", "source_url", "scraped_at", "raw_extra"]);
 
 interface CourseDetailsCardProps {
   course: Course | null;
+  title?: string;
+  description?: string;
+  children?: ReactNode;
 }
 
-export function CourseDetailsCard({ course }: CourseDetailsCardProps) {
+export function CourseDetailsCard({
+  course,
+  title = "Course details",
+  description,
+  children,
+}: CourseDetailsCardProps) {
   const details = course
     ? Object.entries(course).filter(
         ([key, value]) =>
@@ -43,11 +53,12 @@ export function CourseDetailsCard({ course }: CourseDetailsCardProps) {
       size="sm"
     >
       <CardHeader className="shrink-0 gap-1">
-        <CardTitle>Course details</CardTitle>
+        <CardTitle>{title}</CardTitle>
         <CardDescription>
-          {course
-            ? "All available information"
-            : "Select a course from the table"}
+          {description ??
+            (course
+              ? "All available information"
+              : "Select a course from the table")}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -76,6 +87,9 @@ export function CourseDetailsCard({ course }: CourseDetailsCardProps) {
           </div>
         )}
       </CardContent>
+      {course && children ? (
+        <CardFooter className="shrink-0 border-t">{children}</CardFooter>
+      ) : null}
     </Card>
   );
 }

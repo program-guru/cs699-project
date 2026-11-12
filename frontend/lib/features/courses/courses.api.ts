@@ -5,6 +5,7 @@ import type {
   CourseRequest,
   CourseResponse,
   CoursesResponse,
+  SimilarCoursesResponse,
 } from "@/types/course"
 
 export const coursesApi = baseApi.injectEndpoints({
@@ -27,6 +28,9 @@ export const coursesApi = baseApi.injectEndpoints({
       providesTags: (result, error, courseId) => [
         { type: "Course", id: courseId },
       ],
+    }),
+    getSimilarCourses: builder.query<SimilarCoursesResponse, string>({
+      query: (courseId) => `/courses/${encodeURIComponent(courseId)}/similar`,
     }),
     createCourse: builder.mutation<CourseResponse, CourseRequest>({
       query: (course) => ({
@@ -67,6 +71,7 @@ export const {
   useGetCoursesQuery,
   useLazyGetCoursesQuery,
   useGetCourseByIdQuery,
+  useGetSimilarCoursesQuery,
   useCreateCourseMutation,
   useUpdateCourseMutation,
   useDeleteCourseMutation,
