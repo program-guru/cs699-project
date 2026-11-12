@@ -14,27 +14,29 @@ from service.embedding import embedding_fields
 async def ensure_vector_index(database: AsyncDatabase) -> None:
     collection = database["courses"]
     existing = {index["name"] async for index in await collection.list_search_indexes()}
-    if settings.VECTOR_INDEX_NAME in existing:
-        return
-
-    await collection.create_search_index(
-        SearchIndexModel(
-            name=settings.VECTOR_INDEX_NAME,
-            type="vectorSearch",
-            definition={
-                "fields": [
-                    {
-                        "type": "vector",
-                        "path": "embedding",
-                        "numDimensions": settings.EMBEDDING_DIMENSIONS,
-                        "similarity": "cosine",
-                    },
-                    {"type": "filter", "path": "college_id"},
-                    {"type": "filter", "path": "department_id"},
-                ]
+    definition = {
+        "fields": [
+            {
+                "type": "vector",
+                "path": "embedding",
+                "numDimensions": settings.EMBEDDING_DIMENSIONS,
+                "similarity": "cosine",
             },
+            {"type": "filter", "path": "college_id"},
+            {"type": "filter", "path": "department_id"},
+            {"type": "filter", "path": "_id"},
+        ]
+    }
+    if settings.VECTOR_INDEX_NAME in existing:
+        await collection.update_search_index(settings.VECTOR_INDEX_NAME, definition)
+    else:
+        await collection.create_search_index(
+            SearchIndexModel(
+                name=settings.VECTOR_INDEX_NAME,
+                type="vectorSearch",
+                definition=definition,
+            )
         )
-    )
 
 def _course_id(course_id: str) -> ObjectId | None:
     try:
@@ -141,7 +143,7 @@ async def find_similar_courses(
 
     primary = await database["courses"].find_one(
         {"_id": object_id},
-        {"embedding": 1, "embedding_model": 1, "college_id": 1, "department_id": 1},
+        {"embedding": 1, "embedding_model": 1, "department_id": 1},
     )
     if primary is None:
         return "not_found"
@@ -151,9 +153,7 @@ async def find_similar_courses(
     ):
         return "no_embedding"
 
-    vector_filter: dict[str, object] = {
-        "college_id": {"$ne": primary["college_id"]}
-    }
+    vector_filter: dict[str, object] = {"_id": {"$ne": object_id}}
     if not cross_department:
         vector_filter["department_id"] = primary["department_id"]
 

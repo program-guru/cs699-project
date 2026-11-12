@@ -7,7 +7,7 @@ import { AiSummaryCard } from "@/components/compare/ai-summary-card";
 import { ComparePageSkeleton } from "@/components/compare/compare-page-skeleton";
 import { SecondaryCourseCard } from "@/components/compare/secondary-course-card";
 import { CourseDetailsCard } from "@/components/courses/course-details-card";
-import { buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyDescription,
@@ -30,6 +30,7 @@ export default function ComparePage({ params }: ComparePageProps) {
   const [secondaryCourseId, setSecondaryCourseId] = useState<string | null>(
     null,
   );
+  const [crossDepartment, setCrossDepartment] = useState(false);
   const {
     data: primaryData,
     error: primaryError,
@@ -41,7 +42,10 @@ export default function ComparePage({ params }: ComparePageProps) {
     error: similarError,
     isError: isSimilarError,
     isLoading: isSimilarLoading,
-  } = useGetSimilarCoursesQuery(id);
+  } = useGetSimilarCoursesQuery({
+    courseId: id,
+    crossDepartment,
+  });
 
   const primaryCourse = primaryData?.data ?? null;
   const similarCourses = similarData?.data ?? [];
@@ -76,9 +80,13 @@ export default function ComparePage({ params }: ComparePageProps) {
               The course you selected is no longer available.
             </EmptyDescription>
           </EmptyHeader>
-          <Link className={buttonVariants()} href="/courses">
+          <Button
+            nativeButton={false}
+            render={<Link href="/courses" />}
+            size="lg"
+          >
             Back to courses
-          </Link>
+          </Button>
         </Empty>
       </main>
     );
@@ -95,11 +103,14 @@ export default function ComparePage({ params }: ComparePageProps) {
         <SecondaryCourseCard
           course={secondaryCourse}
           courses={similarCourses}
+          crossDepartment={crossDepartment}
           isError={isSimilarError}
           isLoading={isSimilarLoading}
-          onCourseSelect={(course) =>
-            setSecondaryCourseId(course?._id ?? null)
-          }
+          onCrossDepartmentChange={(checked) => {
+            setCrossDepartment(checked);
+            setSecondaryCourseId(null);
+          }}
+          onCourseSelect={(course) => setSecondaryCourseId(course?._id ?? null)}
         />
         <AiSummaryCard />
       </div>

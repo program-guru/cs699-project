@@ -17,28 +17,33 @@ import {
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from "@/components/ui/item";
+import { Switch } from "@/components/ui/switch";
 import type { Course } from "@/types/course";
 
 interface SecondaryCourseCardProps {
   course: Course | null;
   courses: Course[];
+  crossDepartment: boolean;
   isError: boolean;
   isLoading: boolean;
+  onCrossDepartmentChange: (checked: boolean) => void;
   onCourseSelect: (course: Course | null) => void;
 }
 
 export function SecondaryCourseCard({
   course,
   courses,
+  crossDepartment,
   isError,
   isLoading,
+  onCrossDepartmentChange,
   onCourseSelect,
 }: SecondaryCourseCardProps) {
   if (course) {
@@ -63,13 +68,26 @@ export function SecondaryCourseCard({
 
   return (
     <Card
-      className="flex min-h-0 min-w-0 flex-col xl:col-span-1"
+      className="flex h-[min(60rem,calc(100vh-12rem))] min-h-0 min-w-0 flex-col xl:col-span-1"
       size="sm"
     >
-      <CardHeader className="shrink-0 gap-1">
-        <CardTitle>Select secondary course</CardTitle>
+      <CardHeader className="shrink-0 gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle>Select secondary course</CardTitle>
+          <label className="flex shrink-0 cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+            <span>Cross-department</span>
+            <Switch
+              aria-label="Include courses from other departments"
+              checked={crossDepartment}
+              onCheckedChange={onCrossDepartmentChange}
+            />
+          </label>
+        </div>
         <CardDescription>
-          Choose a similar course to compare side by side.
+          Choose a similar course to compare side by side.{" "}
+          {crossDepartment
+            ? "Courses from all departments are included."
+            : "Only courses from the same department are included."}
         </CardDescription>
       </CardHeader>
       <CardContent className="min-h-0 flex-1 overflow-y-auto">
@@ -98,32 +116,35 @@ export function SecondaryCourseCard({
             </EmptyHeader>
           </Empty>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>College</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Course code</TableHead>
-                <TableHead>Title</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {courses.map((similarCourse) => (
-                <TableRow
-                  className="cursor-pointer"
-                  key={similarCourse._id}
-                  onClick={() => onCourseSelect(similarCourse)}
-                >
-                  <TableCell>{similarCourse.college_name}</TableCell>
-                  <TableCell>{similarCourse.department_name}</TableCell>
-                  <TableCell>{similarCourse.course_code ?? "—"}</TableCell>
-                  <TableCell className="max-w-40 truncate font-medium">
-                    {similarCourse.title}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <ItemGroup>
+            {courses.map((similarCourse) => (
+              <Item
+                className="cursor-pointer"
+                key={similarCourse._id}
+                render={
+                  <button
+                    aria-label={`Select ${similarCourse.title}`}
+                    onClick={() => onCourseSelect(similarCourse)}
+                    type="button"
+                  />
+                }
+                variant="outline"
+              >
+                <ItemContent>
+                  <ItemTitle>{similarCourse.title}</ItemTitle>
+                  <ItemDescription>
+                    {similarCourse.department_name} ·{" "}
+                    {similarCourse.course_code ?? "No course code"}
+                  </ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <span className="text-right text-sm text-muted-foreground">
+                    {similarCourse.college_name}
+                  </span>
+                </ItemActions>
+              </Item>
+            ))}
+          </ItemGroup>
         )}
       </CardContent>
     </Card>

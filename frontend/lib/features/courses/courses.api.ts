@@ -29,8 +29,14 @@ export const coursesApi = baseApi.injectEndpoints({
         { type: "Course", id: courseId },
       ],
     }),
-    getSimilarCourses: builder.query<SimilarCoursesResponse, string>({
-      query: (courseId) => `/courses/${encodeURIComponent(courseId)}/similar`,
+    getSimilarCourses: builder.query<
+      SimilarCoursesResponse,
+      { courseId: string; crossDepartment?: boolean }
+    >({
+      query: ({ courseId, crossDepartment = false }) => ({
+        url: `/courses/${encodeURIComponent(courseId)}/similar`,
+        params: { cross_department: crossDepartment },
+      }),
     }),
     createCourse: builder.mutation<CourseResponse, CourseRequest>({
       query: (course) => ({

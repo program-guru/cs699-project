@@ -10,7 +10,10 @@ import {
 
 export function AiSummaryCard() {
   return (
-    <Card className="min-w-0" size="sm">
+    <Card
+      className="flex h-[min(60rem,calc(100vh-12rem))] min-h-0 min-w-0 flex-col xl:col-span-1"
+      size="sm"
+    >
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles aria-hidden="true" />
