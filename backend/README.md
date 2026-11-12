@@ -42,6 +42,8 @@ Database = Annotated[AsyncDatabase, Depends(get_database_session)]
 
 The client is created lazily and reused across requests. Call
 `close_database_connection()` from the application's shutdown lifecycle.
+Application startup creates the `admins` and `courses` collections when they do
+not already exist, then creates the root admin and course vector search index.
 
 ## Authentication
 
@@ -120,6 +122,9 @@ Course reads are public:
   filters. It accepts an optional `college_id` query parameter to limit the
   results to one college.
 - `GET /courses/{course_id}` retrieves one course by its MongoDB ID.
+- `GET /courses/{course_id}/similar` retrieves semantically similar courses.
+  It accepts `limit` (1-25) and `cross_department` query parameters. Course
+  writes and scraping generate embeddings using the configured fastembed model.
 
 Course writes require the authenticated admin cookie:
 

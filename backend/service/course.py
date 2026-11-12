@@ -3,9 +3,38 @@ from typing import Literal
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from models.course import Course, CoursePage, CourseRead
+from core.config import settings
+from models.course import Course, CoursePage, CourseRead, SimilarCourse
 from pymongo.asynchronous.database import AsyncDatabase
+from pymongo.operations import SearchIndexModel
 
+from service.embedding import embedding_fields
+
+
+async def ensure_vector_index(database: AsyncDatabase) -> None:
+    collection = database["courses"]
+    existing = {index["name"] async for index in await collection.list_search_indexes()}
+    if settings.VECTOR_INDEX_NAME in existing:
+        return
+
+    await collection.create_search_index(
+        SearchIndexModel(
+            name=settings.VECTOR_INDEX_NAME,
+            type="vectorSearch",
+            definition={
+                "fields": [
+                    {
+                        "type": "vector",
+                        "path": "embedding",
+                        "numDimensions": settings.EMBEDDING_DIMENSIONS,
+                        "similarity": "cosine",
+                    },
+                    {"type": "filter", "path": "college_id"},
+                    {"type": "filter", "path": "department_id"},
+                ]
+            },
+        )
+    )
 
 def _course_id(course_id: str) -> ObjectId | None:
     try:
@@ -19,6 +48,22 @@ async def create_course(database: AsyncDatabase, course: Course) -> CourseRead:
     result = await database["courses"].insert_one(document)
     document["_id"] = result.inserted_id
     return CourseRead.model_validate(document)
+
+
+async def update_course_embedding(
+    database: AsyncDatabase, course_id: str, course: Course
+) -> None:
+    object_id = _course_id(course_id)
+    if object_id is None:
+        raise ValueError(f"Invalid course ID: {course_id}")
+
+    fields = embedding_fields(course)
+    result = await database["courses"].update_one(
+        {"_id": object_id},
+        {"$set": fields},
+    )
+    if result.matched_count == 0:
+        raise ValueError(f"Course not found while updating embedding: {course_id}")
 
 
 async def list_courses(
@@ -47,7 +92,7 @@ async def list_courses(
     total = await collection.count_documents(filters)
     cursor = (
         collection
-        .find(filters)
+        .find(filters, {"embedding": 0, "embedding_model": 0})
         .sort([("college_id", 1), ("department_id", 1), ("course_code", 1)])
         .skip((page - 1) * page_size)
         .limit(page_size)
@@ -66,7 +111,9 @@ async def get_course(database: AsyncDatabase, course_id: str) -> CourseRead | No
     if object_id is None:
         return None
 
-    document = await database["courses"].find_one({"_id": object_id})
+    document = await database["courses"].find_one(
+        {"_id": object_id}, {"embedding": 0, "embedding_model": 0}
+    )
     return CourseRead.model_validate(document) if document else None
 
 
@@ -77,11 +124,56 @@ async def update_course(
     if object_id is None:
         return "not_found"
 
-    result = await database["courses"].update_one(
-        {"_id": object_id},
-        {"$set": course.model_dump(mode="json", exclude_none=False)},
-    )
+    fields = course.model_dump(mode="json", exclude_none=False)
+    result = await database["courses"].update_one({"_id": object_id}, {"$set": fields})
     return "updated" if result.matched_count > 0 else "not_found"
+
+
+async def find_similar_courses(
+    database: AsyncDatabase,
+    course_id: str,
+    limit: int = 10,
+    cross_department: bool = False,
+) -> list[SimilarCourse] | Literal["not_found", "no_embedding"]:
+    object_id = _course_id(course_id)
+    if object_id is None:
+        return "not_found"
+
+    primary = await database["courses"].find_one(
+        {"_id": object_id},
+        {"embedding": 1, "embedding_model": 1, "college_id": 1, "department_id": 1},
+    )
+    if primary is None:
+        return "not_found"
+    if (
+        not primary.get("embedding")
+        or primary.get("embedding_model") != settings.EMBEDDING_MODEL
+    ):
+        return "no_embedding"
+
+    vector_filter: dict[str, object] = {
+        "college_id": {"$ne": primary["college_id"]}
+    }
+    if not cross_department:
+        vector_filter["department_id"] = primary["department_id"]
+
+    cursor = await database["courses"].aggregate(
+        [
+            {
+                "$vectorSearch": {
+                    "index": settings.VECTOR_INDEX_NAME,
+                    "path": "embedding",
+                    "queryVector": primary["embedding"],
+                    "exact": True,
+                    "limit": limit,
+                    "filter": vector_filter,
+                }
+            },
+            {"$set": {"score": {"$meta": "vectorSearchScore"}}},
+            {"$project": {"embedding": 0, "embedding_model": 0}},
+        ]
+    )
+    return [SimilarCourse.model_validate(document) async for document in cursor]
 
 
 async def delete_course(

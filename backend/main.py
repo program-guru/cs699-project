@@ -12,17 +12,20 @@ from api.routers.courses import router as courses_router
 from api.routers.misc import router as misc_router
 from api.routers.scrape import router as scrape_router
 from core.config import settings
-from core.database import close_database_connection, get_database
+from core.database import close_database_connection, initialize_database
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from service.admin import initialize_database
+from service.embedding import get_model
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    await initialize_database(get_database())
+    get_model()
+    await initialize_database()
+
     yield
+
     await close_database_connection()
 
 
