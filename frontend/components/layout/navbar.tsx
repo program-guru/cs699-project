@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 const navigationItems = [
   { href: "/", label: "Home" },
   { href: "/courses", label: "Courses" },
+  { href: "/exams", label: "Exams" },
 ];
 
 const adminNavigationItems = [
