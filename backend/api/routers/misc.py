@@ -11,8 +11,12 @@ from pymongo.errors import PyMongoError
 from requests import RequestException
 from scrapers.base_scraper import BaseCourseScraper
 from scrapers.registry import registry
-from service.misc import get_colleges, get_course_stats, get_departments
-from service.scrape import replace_courses
+from service.misc import (
+    get_colleges,
+    get_course_stats,
+    get_departments,
+    replace_courses,
+)
 
 from api.dependencies import CurrentAdmin, DBSession
 
