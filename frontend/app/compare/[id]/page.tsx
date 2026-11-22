@@ -54,15 +54,29 @@ export default function ComparePage({ params }: ComparePageProps) {
   const secondaryCourse =
     similarCourses.find(({ _id }) => _id === secondaryCourseId) ?? null;
   const {
-    data: summaryData,
+    currentData: summaryData,
     error: summaryError,
     isError: isSummaryError,
+    isFetching: isSummaryFetching,
     isLoading: isSummaryLoading,
   } = useGetComparisonSummaryQuery(
     secondaryCourseId
       ? { primaryCourseId: id, secondaryCourseId }
       : skipToken,
   );
+
+  const summaryCourseIds = summaryData?.data
+    ? [
+        summaryData.data.primary_course_id,
+        summaryData.data.secondary_course_id,
+      ]
+    : [];
+  const activeSummary =
+    secondaryCourseId &&
+    summaryCourseIds.includes(id) &&
+    summaryCourseIds.includes(secondaryCourseId)
+      ? summaryData?.data ?? null
+      : null;
 
   useEffect(() => {
     if (!isPrimaryError && !isSimilarError) return;
@@ -140,8 +154,8 @@ export default function ComparePage({ params }: ComparePageProps) {
         <AISummaryCard
           error={summaryError}
           isError={isSummaryError}
-          isLoading={isSummaryLoading}
-          summary={summaryData?.data ?? null}
+          isLoading={isSummaryLoading || isSummaryFetching}
+          summary={activeSummary}
         />
       </div>
     </main>
