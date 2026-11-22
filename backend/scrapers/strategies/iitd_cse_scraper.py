@@ -1,40 +1,71 @@
 import re
 import time
-from typing import Any, ClassVar
+from typing import ClassVar
 
 import requests
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 
 from scrapers.base_scraper import BaseCourseScraper, RawCourse
 
-# A course code such as "COL106", "COL 106", "ELL201", "MTL 732"
-_CODE = r"[A-Za-z]{2,4}\s?\d{3}[A-Za-z]?"
 
-# Tokens that may appear in a "Pre-requisites:" / "Overlaps with:" value
-_LIST_TOKEN = (
-    rf"(?:{_CODE}|\bEC\s?\d+\b|\b\d+\b|\bor\b|\band\b|\bequivalent\b|[,/&;()])"
-)
-_LIST_VALUE = rf"(?P<v>(?:\s*{_LIST_TOKEN})+)"
+def is_list_word(word: str) -> bool:
+    """True for words that can appear in 'COL106, COL216 OR Equivalent'."""
+    word = word.strip(",;/&()").lower()
+    return (
+        word in ("", "or", "and", "equivalent")
+        or word.isdigit()  # e.g. "60" in "Pre-requisites: 60"
+        or re.fullmatch(r"[a-z]{2,4}\d{2,3}[a-z]?", word) is not None  # e.g. "col106"
+    )
 
-PREREQ_RE = re.compile(rf"Pre-?\s?requisites?\s*:?\s*{_LIST_VALUE}", re.IGNORECASE)
-PERMISSION_RE = re.compile(
-    r"Pre-?\s?requisites?\s*:?\s*(?P<v>Permission of (?:the )?Instructor)",
-    re.IGNORECASE,
-)
-OVERLAP_RE = re.compile(rf"Overlaps?\s+with\s*:?\s*{_LIST_VALUE}", re.IGNORECASE)
 
-CREDITS_RE = re.compile(
-    r"(?P<credits>\d+(?:\.\d+)?)\s*credits?"
-    r"(?:\s*\((?P<ltp>\d+(?:\.\d+)?-\d+(?:\.\d+)?-\d+(?:\.\d+)?)\))?",
-    re.IGNORECASE,
-)
+def take_list(label: str, text: str):
+    """Find `label` in text and grab the list of course codes written right after it.
+    Returns (the_list_as_text, text_with_label_and_list_removed).
+    If the label is not found, returns (None, text)."""
+    match = re.search(label + r"\s*:?", text, re.IGNORECASE)
+    if not match:
+        return None, text
 
-# "COL100 Introdution to ...", "COL632: Introduction ...", "COL 671: Principles ...:"
-TITLE_RE = re.compile(
-    r"^\s*(?P<dept>[A-Za-z]{2,4})\s*(?P<num>\d{3}[A-Za-z]?)\s*[:\-–]?\s*(?P<name>.+?)\s*[:\-–]?\s*$"
-)
+    words = text[match.end():].split()
+    count = 0
+    while count < len(words) and is_list_word(words[count]):
+        count += 1
 
-CODE_FINDER_RE = re.compile(_CODE)
+    value = " ".join(words[:count])
+    rest = text[: match.start()] + " " + " ".join(words[count:])
+    return value, rest
+
+
+def parse_text(text: str) -> dict:
+    """Pull credits, prerequisites and overlaps out of course text.
+    Whatever is left over becomes the description."""
+    text = " ".join(text.split())
+    text = re.sub(r"\b([A-Z]{2,4}) (\d{3})\b", r"\1\2", text)  # "COL 106" -> "COL106"
+    result = {}
+
+    # Credits, e.g. "4 credits (3-0-2)"
+    match = re.search(r"(\d+\.?\d*)\s*credits?(?:\s*\(([\d-]+)\))?", text, re.IGNORECASE)
+    if match:
+        result["credits"] = float(match.group(1))
+        if match.group(2):
+            result["ltp"] = match.group(2)
+        text = text[: match.start()] + " " + text[match.end():]
+
+    # Prerequisites and overlaps
+    prereq, text = take_list(r"pre-?requisites?", text)
+    if prereq:
+        result["prerequisites"] = re.findall(r"[A-Z]{2,4}\d{3}", prereq.upper()) or [prereq]
+        result["prerequisites_text"] = prereq
+
+    overlap, text = take_list(r"overlaps?\s+with", text)
+    if overlap:
+        result["overlaps"] = re.findall(r"[A-Z]{2,4}\d{3}", overlap.upper())
+
+    description = " ".join(text.split())
+    if description:
+        result["description"] = description
+
+    return result
 
 
 class IITDCSEScraper(BaseCourseScraper):
@@ -50,162 +81,65 @@ class IITDCSEScraper(BaseCourseScraper):
         "Referer": "https://homecse.iitd.ac.in/",
     }
 
-    # Seconds to wait between detail-page requests (be polite to the server).
-    detail_delay: float = 0.3
-
-    # ------------------------------------------------------------------ #
-    # Listing page
-    # ------------------------------------------------------------------ #
     def parse_courses(self, soup: BeautifulSoup) -> list[RawCourse]:
+        """Read the listing page: one entry per course."""
         items = soup.select("li.wp-block-post")
-
         if not items:
-            raise RuntimeError(
-                "No course entries (li.wp-block-post) found on the IIT Delhi page. "
-                "The page structure may have changed."
-            )
+            raise RuntimeError("No courses found on the IIT Delhi page. Structure may have changed.")
 
-        courses: list[RawCourse] = []
-        seen: set[str] = set()
+        courses = []
+        seen = set()
 
         for item in items:
-            link = item.select_one(".wp-block-post-title a[href]")
+            link = item.select_one(".wp-block-post-title a")
             if not link:
                 continue
 
-            raw_title = link.get_text(" ", strip=True)
-            match = TITLE_RE.match(raw_title)
+            # Titles look like "COL100 Intro...", "COL632: Intro...", "COL 671: Principles...:"
+            match = re.match(r"([A-Za-z]{3})\s*(\d{3})[\s:]*(.*)", link.get_text(" ", strip=True))
             if not match:
                 continue
 
-            course_code = f"{match['dept'].upper()}{match['num'].upper()}"
-            title = match["name"].strip(" :-–")
-
-            key = course_code.lower()
-            if key in seen or not title:
+            letters, number, title = match.groups()
+            code = letters.upper() + number
+            if code in seen:
                 continue
-            seen.add(key)
+            seen.add(code)
 
-            excerpt_tag = item.select_one(".wp-block-post-excerpt__excerpt")
-            excerpt = excerpt_tag.get_text(" ", strip=True) if excerpt_tag else ""
-
-            number = match["num"]
-            course: RawCourse = {
-                "course_code": course_code,
-                "title": title,
-                "level": self._level_from_number(number),
-                "category": None,
+            course = {
+                "course_code": code,
+                "title": title.strip(" :"),
+                "level": "UG" if number[0] in "1234" else "PG" if number[0] in "6789" else None,
                 "source_url": link["href"],
-                "current_offering": "category-current-offering"
-                in (item.get("class") or []),
+                "current_offering": "category-current-offering" in item.get("class", []),
             }
-            # Excerpt is truncated, but good enough as a fallback
-            course.update(self._parse_body_text(excerpt, truncated=True))
-            courses.append(course)
 
-        if not courses:
-            raise RuntimeError(
-                f"Found {len(items)} entries, but extracted no courses. "
-                "Inspect the listing HTML and title format."
-            )
+            # The excerpt is cut short, so only use it for credits/prerequisites
+            excerpt = item.select_one(".wp-block-post-excerpt__excerpt")
+            if excerpt:
+                info = parse_text(excerpt.get_text(" ", strip=True))
+                info.pop("description", None)
+                course.update(info)
+
+            courses.append(course)
 
         return courses
 
-    # ------------------------------------------------------------------ #
-    # Detail page
-    # ------------------------------------------------------------------ #
-    def parse_detail(self, soup: BeautifulSoup) -> dict[str, Any]:
-        content = soup.select_one("div.entry-content") or soup.select_one(
-            "div.nv-content-wrap"
-        )
-        if not isinstance(content, Tag):
-            return {}
-
-        text = content.get_text(" ", strip=True)
-        return self._parse_body_text(text, truncated=False)
-
-    def _parse_body_text(self, text: str, truncated: bool) -> dict[str, Any]:
-        """Extract credits, L-T-P, prerequisites, overlaps and description."""
-        text = re.sub(r"\s+", " ", text).strip()
-        result: dict[str, Any] = {}
-
-        # Credits + (L-T-P)
-        credits_match = CREDITS_RE.search(text)
-        if credits_match:
-            result["credits"] = float(credits_match["credits"])
-            if credits_match["ltp"]:
-                result["ltp"] = credits_match["ltp"]
-            text = (text[: credits_match.start()] + " " + text[credits_match.end() :]).strip()
-
-        # Prerequisites
-        prereqs: list[str] = []
-        prereq_match = PREREQ_RE.search(text) or PERMISSION_RE.search(text)
-        if prereq_match:
-            value = prereq_match["v"].strip()
-            prereqs = [c.replace(" ", "").upper() for c in CODE_FINDER_RE.findall(value)]
-            if not prereqs:
-                prereqs = [value]
-            result["prerequisites"] = prereqs
-            result["prerequisites_text"] = value
-            text = (text[: prereq_match.start()] + " " + text[prereq_match.end() :]).strip()
-
-        # Overlaps (kept in raw_extra)
-        overlap_match = OVERLAP_RE.search(text)
-        if overlap_match:
-            result["overlaps"] = [
-                c.replace(" ", "").upper()
-                for c in CODE_FINDER_RE.findall(overlap_match["v"])
-            ]
-            text = (
-                text[: overlap_match.start()] + " " + text[overlap_match.end() :]
-            ).strip()
-
-        # Whatever is left is the description (skip truncated excerpt text)
-        description = re.sub(r"\s+", " ", text).strip()
-        if truncated:
-            description = ""
-        if description:
-            result["description"] = description
-
-        return result
-
-    # ------------------------------------------------------------------ #
-    # Helpers
-    # ------------------------------------------------------------------ #
-    @staticmethod
-    def _level_from_number(number: str) -> str | None:
-        """IITD numbering: 1xx-4xx are UG, 6xx-8xx are PG, 5xx is ambiguous."""
-        digit = number[:1]
-        if digit in "1234":
-            return "UG"
-        if digit in "6789":
-            return "PG"
-        return None
-
-    # ------------------------------------------------------------------ #
-    # Orchestration: listing page -> one request per course detail page
-    # ------------------------------------------------------------------ #
     def scrape(self):
-        soup = self.fetch_page()
-        raw_courses = self.parse_courses(soup)
-
+        listing = self.fetch_page()
         records = []
 
-        for raw in raw_courses:
+        for raw in self.parse_courses(listing):
+            # Open the course's own page: it has the full text
             try:
-                detail_soup = self.fetch_page(raw["source_url"])
-                detail = self.parse_detail(detail_soup)
-                # Detail data wins over the truncated listing excerpt
-                raw.update({k: v for k, v in detail.items() if v})
+                page = self.fetch_page(raw["source_url"])
+                content = page.select_one("div.entry-content")
+                if content:
+                    raw.update(parse_text(content.get_text(" ", strip=True)))
             except (requests.RequestException, RuntimeError) as exc:
-                print(
-                    f"[iitd/cse] could not fetch details for "
-                    f"{raw['course_code']}: {exc}"
-                )
+                print(f"[iitd/cse] could not fetch {raw['course_code']}: {exc}")
 
-            if raw.get("title"):
-                records.append(self.to_common_schema(raw))
-
-            time.sleep(self.detail_delay)
+            records.append(self.to_common_schema(raw))
+            time.sleep(0.3)  # be polite to the server
 
         return records

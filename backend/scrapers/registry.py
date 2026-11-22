@@ -1,10 +1,11 @@
 from scrapers.base_scraper import BaseCourseScraper
 from scrapers.strategies.iitb_cse_scraper import IITBCSEScraper
-from scrapers.strategies.iitm_cse_scraper import IITMCSEScraper
-from scrapers.strategies.iith_cse_scraper import IITHCSEScraper
+from scrapers.strategies.iitb_ee_scraper import IITBEEScraper
 from scrapers.strategies.iitd_cse_scraper import IITDCSEScraper
+from scrapers.strategies.iitd_ee_scraper import IITDEEScraper
+from scrapers.strategies.iith_cse_scraper import IITHCSEScraper
 from scrapers.strategies.iitk_cse_scraper import IITKCSEScraper
-from scrapers.strategies.iitgn_cse_scraper import IITGNCSEScraper
+from scrapers.strategies.iitm_cse_scraper import IITMCSEScraper
 
 
 class ScraperRegistry:
@@ -64,4 +65,5 @@ registry.register("iitb", "cse", IITBCSEScraper)
 registry.register("iith", "cse", IITHCSEScraper)
 registry.register("iitd", "cse", IITDCSEScraper)
 registry.register("iitk", "cse", IITKCSEScraper)
-registry.register("iitgn", "cse", IITGNCSEScraper)
+registry.register("iitb", "ee", IITBEEScraper)
+registry.register("iitd", "ee", IITDEEScraper)
