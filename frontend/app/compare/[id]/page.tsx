@@ -2,8 +2,9 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import { skipToken } from "@reduxjs/toolkit/query";
 
-import { AiSummaryCard } from "@/components/compare/ai-summary-card";
+import { AISummaryCard } from "@/components/compare/ai-summary-card";
 import { ComparePageSkeleton } from "@/components/compare/compare-page-skeleton";
 import { SecondaryCourseCard } from "@/components/compare/secondary-course-card";
 import { CourseDetailsCard } from "@/components/courses/course-details-card";
@@ -17,9 +18,10 @@ import {
 import { toast } from "@/components/ui/toast";
 import { getApiErrorMessage } from "@/lib/features/api/error";
 import {
-  useGetCourseByIdQuery,
+  useGetComparisonSummaryQuery,
   useGetSimilarCoursesQuery,
-} from "@/lib/features/courses/courses.api";
+} from "@/lib/features/compare/compare.api";
+import { useGetCourseByIdQuery } from "@/lib/features/courses/courses.api";
 
 interface ComparePageProps {
   params: Promise<{ id: string }>;
@@ -51,6 +53,16 @@ export default function ComparePage({ params }: ComparePageProps) {
   const similarCourses = similarData?.data ?? [];
   const secondaryCourse =
     similarCourses.find(({ _id }) => _id === secondaryCourseId) ?? null;
+  const {
+    data: summaryData,
+    error: summaryError,
+    isError: isSummaryError,
+    isLoading: isSummaryLoading,
+  } = useGetComparisonSummaryQuery(
+    secondaryCourseId
+      ? { primaryCourseId: id, secondaryCourseId }
+      : skipToken,
+  );
 
   useEffect(() => {
     if (!isPrimaryError && !isSimilarError) return;
@@ -65,6 +77,19 @@ export default function ComparePage({ params }: ComparePageProps) {
       ),
     });
   }, [isPrimaryError, isSimilarError, primaryError, similarError]);
+
+  useEffect(() => {
+    if (!isSummaryError) return;
+
+    toast.add({
+      type: "error",
+      title: "Unable to generate summary",
+      description: getApiErrorMessage(
+        summaryError,
+        "Unable to generate the AI comparison. Please try again.",
+      ),
+    });
+  }, [isSummaryError, summaryError]);
 
   if (isPrimaryLoading) {
     return <ComparePageSkeleton />;
@@ -112,7 +137,12 @@ export default function ComparePage({ params }: ComparePageProps) {
           }}
           onCourseSelect={(course) => setSecondaryCourseId(course?._id ?? null)}
         />
-        <AiSummaryCard />
+        <AISummaryCard
+          error={summaryError}
+          isError={isSummaryError}
+          isLoading={isSummaryLoading}
+          summary={summaryData?.data ?? null}
+        />
       </div>
     </main>
   );

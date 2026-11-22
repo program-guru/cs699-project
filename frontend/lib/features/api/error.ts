@@ -3,15 +3,17 @@ function getResponseMessage(data: unknown): string | undefined {
     return data;
   }
 
-  if (typeof data !== "object" || data === null || !("message" in data)) {
+  if (typeof data !== "object" || data === null) {
     return undefined;
   }
 
   type ApiErrorResponse = {
     message?: unknown;
+    detail?: unknown;
   };
 
-  const message = (data as ApiErrorResponse).message;
+  const response = data as ApiErrorResponse;
+  const message = response.message ?? response.detail;
   return typeof message === "string" && message.length > 0
     ? message
     : undefined;
