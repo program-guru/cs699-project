@@ -1,5 +1,6 @@
 from exam_scrapers.base_scraper import BaseExamScraper
 from exam_scrapers.strategies.gate_scraper import GATEScraper
+from exam_scrapers.strategies.jam_2027_scraper import JAM2027Scraper
 from exam_scrapers.strategies.jam_scraper import JAMScraper
 
 
@@ -34,3 +35,4 @@ class ExamScraperRegistry:
 exam_registry = ExamScraperRegistry()
 exam_registry.register(GATEScraper)
 exam_registry.register(JAMScraper)
+exam_registry.register(JAM2027Scraper)
