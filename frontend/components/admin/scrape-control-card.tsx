@@ -37,15 +37,14 @@ import {
 } from "@/components/ui/dialog"
 import { getApiErrorMessage } from "@/lib/features/api/error"
 import {
-  useDeleteCoursesBySourceMutation,
-  useGetScrapeSourcesQuery,
+  useGetCollegesQuery,
+  useGetDepartmentsQuery,
   useScrapeCoursesMutation,
-} from "@/lib/features/scrape/scrape.api"
+} from "@/lib/features/misc/misc.api"
+import { useDeleteCoursesBySourceMutation } from "@/lib/features/courses/courses.api"
 import { toast } from "@/components/ui/toast"
-import type {
-  DeleteCoursesRequest,
-  ScrapeRequest,
-} from "@/types/scrape"
+import type { DeleteCoursesRequest } from "@/types/course"
+import type { ScrapeRequest } from "@/types/misc"
 
 const ALL_OPTIONS_VALUE = "__all__"
 
@@ -58,30 +57,19 @@ export function ScrapeControlCard() {
     isLoading: isLoadingSources,
     isError: isSourcesError,
     error: sourcesError,
-  } = useGetScrapeSourcesQuery()
+  } = useGetCollegesQuery()
+  const {
+    data: departmentsData,
+    isLoading: isLoadingDepartments,
+  } = useGetDepartmentsQuery(
+    collegeId === ALL_OPTIONS_VALUE
+      ? undefined
+      : collegeId,
+  )
   const [scrapeCourses, scrapeState] = useScrapeCoursesMutation()
   const [deleteCourses, deleteState] = useDeleteCoursesBySourceMutation()
-  const sources = data?.data ?? []
-  const colleges = [
-    ...new Map(
-      sources.map((source) => [
-        source.college_id,
-        { id: source.college_id, name: source.college_name },
-      ]),
-    ).values(),
-  ]
-  const departmentSources =
-    collegeId === ALL_OPTIONS_VALUE
-      ? sources
-      : sources.filter((source) => source.college_id === collegeId)
-  const departments = [
-    ...new Map(
-      departmentSources.map((source) => [
-        source.department_id,
-        { id: source.department_id, name: source.department_name },
-      ]),
-    ).values(),
-  ]
+  const colleges = data?.data ?? []
+  const departments = departmentsData?.data ?? []
 
   useEffect(() => {
     if (isSourcesError) {
@@ -99,26 +87,20 @@ export function ScrapeControlCard() {
   const updateCollege = (value: string | null) => {
     if (value === null) return
     setCollegeId(value)
-    const availableSources =
-      value === ALL_OPTIONS_VALUE
-        ? sources
-        : sources.filter((source) => source.college_id === value)
-    if (
-      departmentId !== ALL_OPTIONS_VALUE &&
-      !availableSources.some(
-        (source) => source.department_id === departmentId,
-      )
-    ) {
-      setDepartmentId(ALL_OPTIONS_VALUE)
-    }
+    setDepartmentId(ALL_OPTIONS_VALUE)
   }
 
   const startScrape = async () => {
     try {
-      const request: ScrapeRequest = {}
-      if (collegeId !== ALL_OPTIONS_VALUE) request.college_id = collegeId
-      if (departmentId !== ALL_OPTIONS_VALUE) {
-        request.department_id = departmentId
+      if (
+        collegeId === ALL_OPTIONS_VALUE ||
+        departmentId === ALL_OPTIONS_VALUE
+      ) {
+        return
+      }
+      const request: ScrapeRequest = {
+        college_name: collegeId,
+        department_name: departmentId,
       }
       const response = await scrapeCourses(request).unwrap()
       toast.add({
@@ -137,34 +119,37 @@ export function ScrapeControlCard() {
 
   const canStartScrape =
     !isLoadingSources &&
+    !isLoadingDepartments &&
     !scrapeState.isLoading &&
     !deleteState.isLoading &&
-    sources.length > 0
+    collegeId !== ALL_OPTIONS_VALUE &&
+    departmentId !== ALL_OPTIONS_VALUE
 
-  const selectedCollege = colleges.find(({ id }) => id === collegeId)
+  const selectedCollege = colleges.find((college) => college === collegeId)
   const selectedDepartment = departments.find(
-    (department) => department.id === departmentId,
+    (department) => department === departmentId,
   )
   const canDeleteCourses =
     !isLoadingSources &&
+    !isLoadingDepartments &&
     !scrapeState.isLoading &&
     !deleteState.isLoading &&
-    sources.length > 0
+    collegeId !== ALL_OPTIONS_VALUE &&
+    departmentId !== ALL_OPTIONS_VALUE
   const deleteScopeDescription =
-    collegeId === ALL_OPTIONS_VALUE
-      ? departmentId === ALL_OPTIONS_VALUE
-        ? "all colleges and departments"
-        : `${selectedDepartment?.name ?? "the selected department"} across all colleges`
-      : departmentId === ALL_OPTIONS_VALUE
-        ? `${selectedCollege?.name ?? "the selected college"} and all its departments`
-        : `${selectedDepartment?.name ?? "the selected department"} at ${selectedCollege?.name ?? "the selected college"}`
+    `${selectedDepartment ?? "the selected department"} at ${selectedCollege ?? "the selected college"}`
 
   const removeCourses = async () => {
     try {
-      const request: DeleteCoursesRequest = {}
-      if (collegeId !== ALL_OPTIONS_VALUE) request.college_id = collegeId
-      if (departmentId !== ALL_OPTIONS_VALUE) {
-        request.department_id = departmentId
+      if (
+        collegeId === ALL_OPTIONS_VALUE ||
+        departmentId === ALL_OPTIONS_VALUE
+      ) {
+        return
+      }
+      const request: DeleteCoursesRequest = {
+        college_name: collegeId,
+        department_name: departmentId,
       }
       const response = await deleteCourses(request).unwrap()
       setIsDeleteDialogOpen(false)
@@ -201,22 +186,21 @@ export function ScrapeControlCard() {
             <Select value={collegeId} onValueChange={updateCollege}>
               <SelectTrigger id="scrape-college" className="w-full">
                 <SelectValue>
-                  {selectedCollege?.name ?? "All colleges"}
+                  {selectedCollege ?? "Select a college"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value={ALL_OPTIONS_VALUE}>All colleges</SelectItem>
                   {colleges.map((college) => (
-                    <SelectItem key={college.id} value={college.id}>
-                      {college.name}
+                    <SelectItem key={college} value={college}>
+                      {college}
                     </SelectItem>
                   ))}
                 </SelectGroup>
               </SelectContent>
             </Select>
             <FieldDescription>
-              Choose a college or include every registered college.
+              Choose a registered college.
             </FieldDescription>
           </Field>
 
@@ -231,26 +215,21 @@ export function ScrapeControlCard() {
             >
               <SelectTrigger id="scrape-department" className="w-full">
                 <SelectValue>
-                  {selectedDepartment?.name ?? "All departments"}
+                  {selectedDepartment ?? "Select a department"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value={ALL_OPTIONS_VALUE}>
-                    All departments
-                  </SelectItem>
                   {departments.map((department) => (
-                    <SelectItem key={department.id} value={department.id}>
-                      {department.name}
+                    <SelectItem key={department} value={department}>
+                      {department}
                     </SelectItem>
                   ))}
                 </SelectGroup>
               </SelectContent>
             </Select>
             <FieldDescription>
-              {collegeId === ALL_OPTIONS_VALUE
-                ? "Choose a department to scrape it across all colleges."
-                : "Choose a department or include every department at this college."}
+              Choose a department at the selected college.
             </FieldDescription>
           </Field>
 
@@ -261,7 +240,7 @@ export function ScrapeControlCard() {
                 "Scrape sources could not be loaded.",
               )}
             </FieldDescription>
-          ) : sources.length === 0 && !isLoadingSources ? (
+          ) : colleges.length === 0 && !isLoadingSources ? (
             <FieldDescription>
               No scrape sources are currently registered.
             </FieldDescription>

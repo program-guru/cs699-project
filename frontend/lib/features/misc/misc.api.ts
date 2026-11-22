@@ -2,6 +2,8 @@ import { baseApi } from "@/lib/features/api/baseApi"
 import type {
   CollegesResponse,
   DepartmentsResponse,
+  ScrapeRequest,
+  ScrapeResponse,
 } from "@/types/misc"
 
 export const miscApi = baseApi.injectEndpoints({
@@ -10,12 +12,23 @@ export const miscApi = baseApi.injectEndpoints({
       query: () => "/misc/colleges",
     }),
     getDepartments: builder.query<DepartmentsResponse, string | void>({
-      query: (collegeId) => ({
+      query: (collegeName) => ({
         url: "/misc/departments",
-        ...(collegeId ? { params: { college_id: collegeId } } : {}),
+        ...(collegeName ? { params: { college_name: collegeName } } : {}),
+      }),
+    }),
+    scrapeCourses: builder.mutation<ScrapeResponse, ScrapeRequest>({
+      query: (request) => ({
+        url: "/misc/scrape",
+        method: "POST",
+        body: request,
       }),
     }),
   }),
 })
 
-export const { useGetCollegesQuery, useGetDepartmentsQuery } = miscApi
+export const {
+  useGetCollegesQuery,
+  useGetDepartmentsQuery,
+  useScrapeCoursesMutation,
+} = miscApi

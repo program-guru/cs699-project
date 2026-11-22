@@ -1,14 +1,10 @@
 import type { DTO } from "@/types/dto"
 
-export interface CollegeOption {
-  id: string
-  name: string
+export interface ScrapeRequest {
+  college_name: string
+  department_name: string
 }
 
-export interface DepartmentOption {
-  id: string
-  name: string
-}
-
-export type CollegesResponse = DTO<CollegeOption[]>
-export type DepartmentsResponse = DTO<DepartmentOption[]>
+export type ScrapeResponse = DTO<null>
+export type CollegesResponse = DTO<string[]>
+export type DepartmentsResponse = DTO<string[]>

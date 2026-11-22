@@ -45,9 +45,7 @@ function nullableNumber(value: string) {
 
 function getInitialValues(course: Course | null): CourseRequest {
   return {
-    college_id: course?.college_id ?? "",
     college_name: course?.college_name ?? "",
-    department_id: course?.department_id ?? "",
     department_name: course?.department_name ?? "",
     course_code: course?.course_code ?? null,
     title: course?.title ?? "",
@@ -232,29 +230,16 @@ export function CourseFormCard({
                 )}
                 <div className="grid gap-6 sm:grid-cols-2">
                   <Field>
-                    <FieldLabel htmlFor="course-college-id">College ID</FieldLabel>
-                    <Input
-                      id="course-college-id"
-                      value={values.college_id}
-                      onChange={(event) => update("college_id", event.target.value)}
-                      required
-                    />
-                  </Field>
-                  <Field>
                     <FieldLabel htmlFor="course-college-name">College name</FieldLabel>
                     <Input
                       id="course-college-name"
                       value={values.college_name}
-                      onChange={(event) => update("college_name", event.target.value)}
-                      required
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="course-department-id">Department ID</FieldLabel>
-                    <Input
-                      id="course-department-id"
-                      value={values.department_id}
-                      onChange={(event) => update("department_id", event.target.value)}
+                      onChange={(event) =>
+                        update(
+                          "college_name",
+                          event.target.value as CourseRequest["college_name"],
+                        )
+                      }
                       required
                     />
                   </Field>
@@ -265,7 +250,12 @@ export function CourseFormCard({
                     <Input
                       id="course-department-name"
                       value={values.department_name}
-                      onChange={(event) => update("department_name", event.target.value)}
+                      onChange={(event) =>
+                        update(
+                          "department_name",
+                          event.target.value as CourseRequest["department_name"],
+                        )
+                      }
                       required
                     />
                   </Field>

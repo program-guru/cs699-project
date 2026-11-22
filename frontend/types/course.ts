@@ -2,9 +2,7 @@ import type { DTO } from "@/types/dto"
 
 export interface Course {
   _id: string
-  college_id: string
   college_name: string
-  department_id: string
   department_name: string
   course_code: string | null
   title: string
@@ -41,11 +39,17 @@ export type SimilarCourse = Course & { score: number }
 export type SimilarCoursesResponse = DTO<SimilarCourse[]>
 export type CourseMutationResponse = DTO<null>
 export type CourseStatsResponse = DTO<CourseStats>
+export type DeleteCoursesResponse = DTO<null>
 
 export interface CourseQueryParams {
-  college_id?: string
-  department_id?: string
+  college_name?: string
+  department_name?: string
   search?: string
   page?: number
   page_size?: number
+}
+
+export interface DeleteCoursesRequest {
+  college_name: string
+  department_name: string
 }

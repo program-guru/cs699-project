@@ -5,6 +5,8 @@ import type {
   CourseRequest,
   CourseResponse,
   CoursesResponse,
+  DeleteCoursesRequest,
+  DeleteCoursesResponse,
   SimilarCoursesResponse,
 } from "@/types/course"
 
@@ -70,6 +72,17 @@ export const coursesApi = baseApi.injectEndpoints({
         { type: "Course", id: "LIST" },
       ],
     }),
+    deleteCoursesBySource: builder.mutation<
+      DeleteCoursesResponse,
+      DeleteCoursesRequest
+    >({
+      query: (request) => ({
+        url: "/courses/",
+        method: "DELETE",
+        body: request,
+      }),
+      invalidatesTags: [{ type: "Course", id: "LIST" }],
+    }),
   }),
 })
 
@@ -81,4 +94,5 @@ export const {
   useCreateCourseMutation,
   useUpdateCourseMutation,
   useDeleteCourseMutation,
+  useDeleteCoursesBySourceMutation,
 } = coursesApi

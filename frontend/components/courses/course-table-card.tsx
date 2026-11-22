@@ -81,8 +81,11 @@ export function CourseTableCard({
     isLoading,
     isError,
   } = useGetCoursesQuery({
-    college_id: college === "all" ? undefined : college,
-    department_id: department === "all" ? undefined : department,
+    college_name: college === "all" ? undefined : college,
+    department_name:
+      department === "all"
+        ? undefined
+        : department,
     search: appliedSearch || undefined,
     page,
     page_size: pageSize,
@@ -96,7 +99,9 @@ export function CourseTableCard({
     data: departmentsData,
     error: departmentsError,
     isError: isDepartmentsError,
-  } = useGetDepartmentsQuery(college === "all" ? undefined : college);
+  } = useGetDepartmentsQuery(
+    college === "all" ? undefined : college,
+  );
   const coursePage = data?.data;
   const courses = useMemo(() => coursePage?.courses ?? [], [coursePage]);
 
@@ -171,14 +176,13 @@ export function CourseTableCard({
   const selectedCollegeLabel =
     college === "all"
       ? "All Colleges"
-      : (colleges.find((option) => option.id === college)?.name ??
-        "All Colleges");
+      : colleges.find((option) => option === college) ?? "All Colleges";
 
   const selectedDepartmentLabel =
     department === "all"
       ? "All Departments"
-      : (departments.find((option) => option.id === department)?.name ??
-        "All Departments");
+      : departments.find((option) => option === department) ??
+        "All Departments";
 
   const total = coursePage?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -209,8 +213,8 @@ export function CourseTableCard({
             <SelectContent>
               <SelectGroup>
                 <SelectItem value="all">All Colleges</SelectItem>
-                {colleges.map(({ id, name }) => (
-                  <SelectItem key={id} value={id}>
+                {colleges.map((name) => (
+                  <SelectItem key={name} value={name}>
                     {name}
                   </SelectItem>
                 ))}
@@ -229,8 +233,8 @@ export function CourseTableCard({
             <SelectContent>
               <SelectGroup>
                 <SelectItem value="all">All Departments</SelectItem>
-                {departments.map(({ id, name }) => (
-                  <SelectItem key={id} value={id}>
+                {departments.map((name) => (
+                  <SelectItem key={name} value={name}>
                     {name}
                   </SelectItem>
                 ))}
