@@ -1,6 +1,10 @@
 from contextlib import asynccontextmanager
 from typing import Any, cast
 
+from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+
 from api.exception_handlers import (
     general_exception_handler,
     http_exception_handler,
@@ -8,13 +12,11 @@ from api.exception_handlers import (
 )
 from api.routers.admin import router as admin_router
 from api.routers.auth import router as auth_router
+from api.routers.compare import router as compare_router
 from api.routers.courses import router as courses_router
 from api.routers.misc import router as misc_router
 from core.config import settings
 from core.database import close_database_connection, initialize_database
-from fastapi import FastAPI, HTTPException
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
 from service.embedding import get_model
 
 
@@ -48,3 +50,4 @@ app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(courses_router)
 app.include_router(misc_router)
+app.include_router(compare_router)

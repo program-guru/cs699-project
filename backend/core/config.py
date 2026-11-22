@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     EMBEDDING_DIMENSIONS: int = 384
     EMBEDDING_CACHE_DIR: str = ".cache/fastembed"
     VECTOR_INDEX_NAME: str = "course_vec"
+    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_MODEL: str = "openrouter/free"
+    LLM_TIMEOUT_SECONDS: int = 60
+    LLM_MAX_ATTEMPTS: int = 3
 
     # This tells Pydantic where to find the .env file and allows extra fields
     model_config = SettingsConfigDict(

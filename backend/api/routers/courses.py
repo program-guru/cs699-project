@@ -1,27 +1,25 @@
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
+
+from api.dependencies import CurrentAdmin, DBSession
 from models.catalog import College, Department
 from models.course import (
     Course,
     CoursePage,
     CourseRead,
     DeleteCoursesRequest,
-    SimilarCourse,
 )
 from models.dto import DTO
 from service.course import (
     create_course,
     delete_course,
     delete_courses,
-    find_similar_courses,
     get_course,
     list_courses,
     update_course,
     update_course_embedding,
 )
-
-from api.dependencies import CurrentAdmin, DBSession
 
 router = APIRouter(prefix="/courses", tags=["courses"])
 
@@ -47,32 +45,6 @@ async def get_courses(
             page_size,
         ),
     )
-
-
-@router.get("/{course_id}/similar", response_model=DTO[list[SimilarCourse]])
-async def get_similar_courses(
-    course_id: str,
-    database: DBSession,
-    limit: Annotated[int, Query(ge=1, le=25)] = 10,
-    cross_department: Annotated[bool, Query()] = False,
-) -> DTO[list[SimilarCourse]]:
-    result = await find_similar_courses(database, course_id, limit, cross_department)
-    if result == "not_found":
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found",
-        )
-    if result == "no_embedding":
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Course has no embedding yet; run the backfill or re-scrape",
-        )
-    return DTO(
-        success=True,
-        message="Similar courses retrieved successfully",
-        data=result,
-    )
-
 
 @router.get("/{course_id}", response_model=DTO[CourseRead])
 async def get_course_by_id(

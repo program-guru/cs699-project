@@ -10,6 +10,10 @@
 			"tools": [
 				"*"
 			]
+		},
+		"OpenRouterMCP": {
+			"url": "https://mcp.openrouter.ai/mcp",
+			"type": "http"
 		}
 	}
 }
