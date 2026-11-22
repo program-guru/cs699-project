@@ -5,7 +5,7 @@ class College(StrEnum):
     IITB = "IIT Bombay"
     IITD = "IIT Delhi"
     IITH = "IIT Hyderabad"
-    IITK = "IIT Kharagpur"
+    IITK = "IIT Kanpur"
 
 
 class Department(StrEnum):
