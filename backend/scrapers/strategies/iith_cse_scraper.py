@@ -49,7 +49,7 @@ class IITHCSEScraper(BaseCourseScraper):
     COURSE_CODE_RE = re.compile(r"^[A-Z]{2,3}\s?\d{4}[A-Z]?$")
     LTPC_RE = re.compile(r"^\d+(?:\.\d+)?(?:-\d+(?:\.\d+)?){3}$")
 
-    # header keyword -> field name (checked in order)
+    # header keyword to field name mapping
     HEADER_KEYWORDS: ClassVar[tuple[tuple[str, str], ...]] = (
         ("code", "course_code"),
         ("credit", "credits"),
@@ -72,20 +72,17 @@ class IITHCSEScraper(BaseCourseScraper):
     }
 
     def parse_courses(self, soup: BeautifulSoup) -> list[RawCourse]:
-        # Data comes from CSV exports, not an HTML page.
+        # data will comes from CSV exports
         del soup
         raise NotImplementedError("Use scrape() to process the CSV exports.")
 
     def scrape(self) -> list[Course]:
-        # Override so we don't depend on the department HTML page being reachable.
         raw_courses: list[RawCourse] = []
         seen: set[str] = set()
 
         for category, level_hint, url in self.SHEETS:
             rows = self._fetch_csv(url)
             parsed = self._parse_rows(rows, category, level_hint, url)
-            print(f"[iith] {category}/{level_hint}: {len(rows)} rows -> {len(parsed)} courses")
-
             for raw in parsed:
                 key = raw["course_code"].lower()
                 if key in seen:
@@ -109,7 +106,7 @@ class IITHCSEScraper(BaseCourseScraper):
             headers=self.request_headers,
         )
         response.raise_for_status()
-        response.encoding = "utf-8"  # requests may guess latin-1 for text/csv
+        response.encoding = "utf-8"
 
         text = response.text
         if text.lstrip().lower().startswith(("<!doctype", "<html")):
@@ -149,7 +146,6 @@ class IITHCSEScraper(BaseCourseScraper):
                 "course_code": code,
                 "title": title,
                 "category": category,
-                "level": self._get_level(code),
                 "credits": credits,
                 "description": cell("description") or None,
                 "source_url": url,
@@ -182,13 +178,12 @@ class IITHCSEScraper(BaseCourseScraper):
 
         return dict(self.DEFAULT_COLUMNS), 0
 
-    @classmethod
-    def _parse_credits(cls, value: str) -> tuple[int | float | None, str]:
+    def _parse_credits(self, value: str) -> tuple[int | float | None, str]:
         value = value.strip()
         if not value:
             return None, ""
 
-        if cls.LTPC_RE.fullmatch(value):  # e.g. 3-0-0-3 -> last number is credits
+        if self.LTPC_RE.fullmatch(value):  # last number is credits
             value = value.split("-")[-1]
 
         try:
@@ -197,10 +192,3 @@ class IITHCSEScraper(BaseCourseScraper):
             return None, value
 
         return (int(number) if number.is_integer() else number), ""
-
-    @staticmethod
-    def _get_level(course_code: str) -> str:
-        match = re.search(r"\d+", course_code)
-        if not match:
-            return "Unknown"
-        return "UG" if int(match.group()) < 5000 else "PG"
