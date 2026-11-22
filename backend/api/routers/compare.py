@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -11,6 +12,7 @@ from service.llm import LLMError
 from api.dependencies import DBSession
 
 router = APIRouter(prefix="/compare", tags=["compare"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("/{course_id}", response_model=DTO[list[SimilarCourse]])
@@ -47,7 +49,18 @@ async def get_ai_summary(
     secondary_course_id: str,
     database: DBSession,
 ) -> DTO[ComparisonSummary]:
+    logger.info(
+        "Comparison request started: primary_course_id=%s secondary_course_id=%s",
+        primary_course_id,
+        secondary_course_id,
+    )
     if primary_course_id == secondary_course_id:
+        logger.warning(
+            "Comparison request failed: primary_course_id=%s "
+            "secondary_course_id=%s reason=same_course",
+            primary_course_id,
+            secondary_course_id,
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Choose two different courses to compare",
@@ -59,17 +72,37 @@ async def get_ai_summary(
             primary_course_id,
             secondary_course_id,
         )
-    except LLMError:
+    except LLMError as error:
+        logger.error(
+            "Comparison request failed: primary_course_id=%s "
+            "secondary_course_id=%s reason=llm_unavailable error=%s",
+            primary_course_id,
+            secondary_course_id,
+            error,
+        )
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="AI summary is temporarily unavailable. Please try again shortly.",
         ) from None
 
     if result == "not_found":
+        logger.warning(
+            "Comparison request failed: primary_course_id=%s "
+            "secondary_course_id=%s reason=course_not_found",
+            primary_course_id,
+            secondary_course_id,
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Course not found",
         )
+    logger.info(
+        "Comparison request succeeded: primary_course_id=%s "
+        "secondary_course_id=%s model=%s",
+        primary_course_id,
+        secondary_course_id,
+        result.model,
+    )
     return DTO(
         success=True,
         message="AI summary retrieved successfully",
