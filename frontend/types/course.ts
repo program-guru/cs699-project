@@ -37,6 +37,8 @@ export type CourseStats = {
 
 export type CoursesResponse = DTO<CoursePage>
 export type CourseResponse = DTO<Course>
+export type SimilarCourse = Course & { score: number }
+export type SimilarCoursesResponse = DTO<SimilarCourse[]>
 export type CourseMutationResponse = DTO<null>
 export type CourseStatsResponse = DTO<CourseStats>
 

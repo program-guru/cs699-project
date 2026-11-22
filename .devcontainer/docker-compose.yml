@@ -9,23 +9,20 @@ services:
     command: sleep infinity
     depends_on:
       - mongo
-    environment:
-      MONGO_HOST: mongo
-      MONGO_PORT: 27017
-      MONGO_DB: uniscope
-      MONGO_URI: mongodb://mongo:27017/uniscope
     networks:
       - uniscope-network
 
   mongo:
-    image: mongo:7.0
+    image: mongodb/mongodb-atlas-local:latest
     container_name: uniscope-mongo
     hostname: mongo
     restart: unless-stopped
     ports:
       - "27017:27017"
     volumes:
-      - mongo-data:/data/db
+      - db:/data/db
+      - configdb:/data/configdb
+      - mongot:/data/mongot
     networks:
       - uniscope-network
 
@@ -34,4 +31,6 @@ networks:
     driver: bridge
 
 volumes:
-  mongo-data:
+  db:
+  configdb:
+  mongot:

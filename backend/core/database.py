@@ -2,6 +2,9 @@ from collections.abc import AsyncGenerator
 
 from pymongo import AsyncMongoClient
 from pymongo.asynchronous.database import AsyncDatabase
+from pymongo.errors import CollectionInvalid
+from service.admin import create_root_admin
+from service.course import ensure_vector_index
 
 from core.config import settings
 
@@ -37,6 +40,24 @@ def get_database() -> AsyncDatabase:
 async def get_database_session() -> AsyncGenerator[AsyncDatabase]:
     """FastAPI dependency that provides the configured MongoDB database."""
     yield get_database()
+
+
+async def initialize_database() -> None:
+    """Create required collections and indexes for a new database."""
+    database = get_database()
+    existing_collections = set(await database.list_collection_names())
+
+    for collection_name in ("admins", "courses"):
+        if collection_name not in existing_collections:
+            try:
+                await database.create_collection(collection_name)
+            except CollectionInvalid:
+                # Another startup process may have created it concurrently.
+                pass
+
+
+    await create_root_admin(database)
+    await ensure_vector_index(database)
 
 
 async def close_database_connection() -> None:

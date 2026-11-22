@@ -1,7 +1,10 @@
+from core.config import settings
 from models.course import Course
 from models.scraper import ScrapeResult
 from pymongo.asynchronous.client_session import AsyncClientSession
 from pymongo.asynchronous.database import AsyncDatabase
+
+from service.embedding import embed_texts, embedding_text
 
 
 async def _supports_transactions(database: AsyncDatabase) -> bool:
@@ -16,6 +19,11 @@ async def replace_courses(
     records: list[Course],
 ) -> ScrapeResult:
     documents = [course.model_dump(mode="json") for course in records]
+    vectors = embed_texts([embedding_text(course) for course in records])
+    for document, vector in zip(documents, vectors, strict=True):
+        document["embedding"] = vector
+        document["embedding_model"] = settings.EMBEDDING_MODEL
+
     source_filter = {
         "college_id": college_id,
         "department_id": department_id,

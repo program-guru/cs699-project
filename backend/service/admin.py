@@ -9,7 +9,7 @@ from pymongo.errors import DuplicateKeyError
 from service.auth import password_hash
 
 
-async def initialize_database(database: AsyncDatabase) -> None:
+async def create_root_admin(database: AsyncDatabase) -> None:
     """Create the immutable root admin and enforce unique admin usernames."""
     collection = database["admins"]
     await collection.update_one(

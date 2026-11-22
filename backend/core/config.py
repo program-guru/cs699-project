@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     ROOT_USERNAME: str = "root"
     ROOT_PASSWORD: str = "root"
     FRONTEND_URL: str = "http://localhost:3000"
+    EMBEDDING_MODEL: str = "BAAI/bge-small-en-v1.5"
+    EMBEDDING_DIMENSIONS: int = 384
+    EMBEDDING_CACHE_DIR: str = ".cache/fastembed"
+    VECTOR_INDEX_NAME: str = "course_vec"
 
     # This tells Pydantic where to find the .env file and allows extra fields
     model_config = SettingsConfigDict(

@@ -70,3 +70,7 @@ class CoursePage(BaseModel):
     page: int
     page_size: int
     total: int
+
+
+class SimilarCourse(CourseRead):
+    score: float

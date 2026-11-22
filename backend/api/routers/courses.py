@@ -1,14 +1,16 @@
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
-from models.course import Course, CoursePage, CourseRead
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
+from models.course import Course, CoursePage, CourseRead, SimilarCourse
 from models.dto import DTO
 from service.course import (
     create_course,
     delete_course,
+    find_similar_courses,
     get_course,
     list_courses,
     update_course,
+    update_course_embedding,
 )
 
 from api.dependencies import CurrentAdmin, DBSession
@@ -39,6 +41,31 @@ async def get_courses(
     )
 
 
+@router.get("/{course_id}/similar", response_model=DTO[list[SimilarCourse]])
+async def get_similar_courses(
+    course_id: str,
+    database: DBSession,
+    limit: Annotated[int, Query(ge=1, le=25)] = 10,
+    cross_department: Annotated[bool, Query()] = False,
+) -> DTO[list[SimilarCourse]]:
+    result = await find_similar_courses(database, course_id, limit, cross_department)
+    if result == "not_found":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found",
+        )
+    if result == "no_embedding":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Course has no embedding yet; run the backfill or re-scrape",
+        )
+    return DTO(
+        success=True,
+        message="Similar courses retrieved successfully",
+        data=result,
+    )
+
+
 @router.get("/{course_id}", response_model=DTO[CourseRead])
 async def get_course_by_id(
     course_id: str,
@@ -57,12 +84,25 @@ async def get_course_by_id(
 async def create_course_record(
     course: Course,
     database: DBSession,
+    background_tasks: BackgroundTasks,
     _: CurrentAdmin,
 ) -> DTO[CourseRead]:
+    created_course = await create_course(database, course)
+    if created_course.id is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Course created without an ID",
+        )
+    background_tasks.add_task(
+        update_course_embedding,
+        database,
+        created_course.id,
+        course,
+    )
     return DTO(
         success=True,
         message="Course created successfully",
-        data=await create_course(database, course),
+        data=created_course,
     )
 
 
@@ -71,6 +111,7 @@ async def update_course_record(
     course_id: str,
     course: Course,
     database: DBSession,
+    background_tasks: BackgroundTasks,
     _: CurrentAdmin,
 ) -> DTO[None]:
     result = await update_course(database, course_id, course)
@@ -79,6 +120,7 @@ async def update_course_record(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Course not found",
         )
+    background_tasks.add_task(update_course_embedding, database, course_id, course)
     return DTO(success=True, message="Course updated successfully")
 
 
