@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { ConfirmationDialog } from "@/components/layout/dialog"
 import {
   Field,
   FieldDescription,
@@ -46,6 +47,7 @@ export function AdminFormCard({
   const [logout] = useLogoutMutation()
   const [username, setUsername] = useState(admin.username)
   const [password, setPassword] = useState("")
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   const save = async () => {
     try {
@@ -73,6 +75,7 @@ export function AdminFormCard({
   const remove = async () => {
     try {
       await deleteAdmin(admin._id).unwrap()
+      setIsDeleteDialogOpen(false)
       toast.add({
         type: "success",
         title: "Administrator deleted",
@@ -141,15 +144,7 @@ export function AdminFormCard({
           type="button"
           variant="destructive"
           disabled={isSaving || isDeleting}
-          onClick={() => {
-            if (
-              window.confirm(
-                "Delete this administrator? This action cannot be undone.",
-              )
-            ) {
-              void remove()
-            }
-          }}
+          onClick={() => setIsDeleteDialogOpen(true)}
         >
           Delete
         </Button>
@@ -161,6 +156,17 @@ export function AdminFormCard({
           {isSaving ? "Saving..." : "Save"}
         </Button>
       </CardFooter>
+      <ConfirmationDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Delete administrator?"
+        description={`This permanently deletes ${admin.username}. This action cannot be undone.`}
+        confirmLabel="Delete administrator"
+        loadingLabel="Deleting..."
+        isLoading={isDeleting}
+        isDisabled={isSaving}
+        onConfirm={remove}
+      />
     </Card>
   )
 }

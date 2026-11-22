@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { ConfirmationDialog } from "@/components/layout/dialog"
 import {
   Field,
   FieldDescription,
@@ -80,6 +81,7 @@ export function CourseFormCard({
   const [createCourse, createState] = useCreateCourseMutation()
   const [updateCourse, updateState] = useUpdateCourseMutation()
   const [deleteCourse, deleteState] = useDeleteCourseMutation()
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const isSaving = createState.isLoading || updateState.isLoading
   const isDeleting = deleteState.isLoading
 
@@ -120,6 +122,7 @@ export function CourseFormCard({
 
     try {
       await deleteCourse(course._id).unwrap()
+      setIsDeleteDialogOpen(false)
       toast.add({
         type: "success",
         title: "Course deleted",
@@ -444,11 +447,7 @@ export function CourseFormCard({
             type="button"
             variant="destructive"
             disabled={isSaving || isDeleting}
-            onClick={() => {
-              if (window.confirm("Delete this course? This action cannot be undone.")) {
-                void remove()
-              }
-            }}
+            onClick={() => setIsDeleteDialogOpen(true)}
           >
             Delete
           </Button>
@@ -457,6 +456,19 @@ export function CourseFormCard({
           {isSaving ? "Saving..." : "Save"}
         </Button>
       </CardFooter>
+      {isEditing && (
+        <ConfirmationDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          title="Delete course?"
+          description={`This permanently deletes ${course?.title || "this course"}. This action cannot be undone.`}
+          confirmLabel="Delete course"
+          loadingLabel="Deleting..."
+          isLoading={isDeleting}
+          isDisabled={isSaving}
+          onConfirm={remove}
+        />
+      )}
     </Card>
   )
 }

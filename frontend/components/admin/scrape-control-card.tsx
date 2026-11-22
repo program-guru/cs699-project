@@ -26,15 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { ConfirmationDialog } from "@/components/layout/dialog"
 import { getApiErrorMessage } from "@/lib/features/api/error"
 import {
   useGetCollegesQuery,
@@ -274,43 +266,17 @@ export function ScrapeControlCard() {
           Delete courses
         </Button>
       </CardFooter>
-      <Dialog
+      <ConfirmationDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete courses?</DialogTitle>
-            <DialogDescription>
-              This permanently deletes all courses for {deleteScopeDescription}.
-              This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <DialogClose
-              render={<Button variant="outline" disabled={deleteState.isLoading} />}
-            >
-              Cancel
-            </DialogClose>
-            <Button
-              disabled={!canDeleteCourses}
-              onClick={removeCourses}
-              variant="destructive"
-            >
-              {deleteState.isLoading ? (
-                <LoaderCircle
-                  className="animate-spin"
-                  data-icon="inline-start"
-                  aria-hidden="true"
-                />
-              ) : (
-                <Trash2 data-icon="inline-start" aria-hidden="true" />
-              )}
-              {deleteState.isLoading ? "Deleting..." : "Delete courses"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        title="Delete courses?"
+        description={`This permanently deletes all courses for ${deleteScopeDescription}. This action cannot be undone.`}
+        confirmLabel="Delete courses"
+        loadingLabel="Deleting..."
+        isLoading={deleteState.isLoading}
+        isDisabled={!canDeleteCourses}
+        onConfirm={removeCourses}
+      />
     </Card>
   )
 }
