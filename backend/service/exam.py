@@ -2,12 +2,13 @@ from typing import Any
 
 from pymongo.asynchronous.database import AsyncDatabase
 
+from models.catalog import Exam
 from models.exam import ExamTimeline, ExamTimelineEvent
 
 
 async def replace_exam_timeline(
     database: AsyncDatabase,
-    exam: str,
+    exam: Exam,
     year: int,
     source_url: str,
     records: list[dict[str, Any]],
@@ -24,7 +25,7 @@ async def replace_exam_timeline(
     ]
     documents = [
         {
-            "exam": exam.upper(),
+            "exam": exam.value,
             "year": year,
             "source_url": source_url,
             "position": event.position,
@@ -35,7 +36,7 @@ async def replace_exam_timeline(
         for event in events
     ]
 
-    await collection.delete_many({"exam": exam.upper(), "year": year})
+    await collection.delete_many({"exam": exam.value, "year": year})
     if documents:
         await collection.insert_many(documents)
     return len(documents)
@@ -43,13 +44,13 @@ async def replace_exam_timeline(
 
 async def get_exam_timeline(
     database: AsyncDatabase,
-    exam: str,
+    exam: Exam,
     year: int,
 ) -> ExamTimeline | None:
     collection = database["exam_events"]
     cursor = (
         collection.find(
-            {"exam": exam.upper(), "year": year},
+            {"exam": exam.value, "year": year},
             {"_id": 0},
         )
         .sort("position", 1)

@@ -4,6 +4,7 @@ from typing import ClassVar
 from bs4 import BeautifulSoup, Tag
 
 from exam_scrapers.base_scraper import BaseExamScraper
+from models.catalog import Exam
 
 
 class GATEScraper(BaseExamScraper):
@@ -14,7 +15,7 @@ class GATEScraper(BaseExamScraper):
     GATE important dates HTML table.
     """
 
-    exam_name = "GATE"
+    exam_name = Exam.GATE
     year = 2027
 
     base_url = "https://gate2027.iitm.ac.in/"

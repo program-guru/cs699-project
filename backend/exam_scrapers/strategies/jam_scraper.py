@@ -3,10 +3,11 @@ from typing import ClassVar
 from bs4 import BeautifulSoup
 
 from exam_scrapers.base_scraper import BaseExamScraper
+from models.catalog import Exam
 
 
 class JAMScraper(BaseExamScraper):
-    exam_name = "JAM"
+    exam_name = Exam.JAM
     year = 2026
 
     base_url = "https://jam2026.iitb.ac.in/"

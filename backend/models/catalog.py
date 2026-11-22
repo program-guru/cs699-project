@@ -11,3 +11,8 @@ class College(StrEnum):
 class Department(StrEnum):
     CSE = "Computer Science and Engineering"
     EE = "Electrical Engineering"
+
+
+class Exam(StrEnum):
+    GATE = "GATE"
+    JAM = "JAM"

@@ -1,5 +1,7 @@
 from pydantic import BaseModel, HttpUrl
 
+from models.catalog import Exam
+
 
 class ExamDateValue(BaseModel):
     value: str
@@ -17,7 +19,7 @@ class ExamTimelineEvent(ExamTimelineEventCreate):
 
 
 class ExamTimeline(BaseModel):
-    exam: str
+    exam: Exam
     year: int
     source_url: HttpUrl
     events: list[ExamTimelineEvent]

@@ -8,12 +8,12 @@ from pymongo.errors import PyMongoError
 from requests import RequestException
 
 from api.dependencies import CurrentAdmin, DBSession
-from models.dto import DTO
-from models.exam import ExamTimeline
 from exam_scrapers.base_scraper import BaseExamScraper
 from exam_scrapers.registry import exam_registry
+from models.catalog import Exam
+from models.dto import DTO
+from models.exam import ExamTimeline
 from service.exam import get_exam_timeline, replace_exam_timeline
-
 
 router = APIRouter(prefix="/exams", tags=["exams"])
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ async def list_exams() -> DTO[list[str]]:
     return DTO(
         success=True,
         message="Exams retrieved successfully",
-        data=exam_registry.exams(),
+        data=[exam.value for exam in exam_registry.exams()],
     )
 
 
@@ -44,7 +44,7 @@ async def _refresh_exam_timeline(
     except (PyMongoError, RequestException, RuntimeError, TypeError, ValueError):
         logger.exception(
             "Exam timeline refresh failed for %s %s",
-            scraper.exam_name,
+            scraper.exam_name.value,
             scraper.year,
         )
     finally:
@@ -57,7 +57,14 @@ async def get_exam(
     database: DBSession,
     year: Annotated[int | None, Query()] = None,
 ) -> DTO[ExamTimeline]:
-    normalized = exam_name.upper()
+    try:
+        normalized = Exam(exam_name.upper())
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Unknown exam",
+        ) from None
+
     available_years = exam_registry.years(normalized)
     selected_year = year or (available_years[0] if available_years else None)
 
@@ -87,11 +94,15 @@ async def get_exam(
                 source_url=scraper.source_url,
                 records=records,
             )
-            timeline = await get_exam_timeline(database, normalized, selected_year)
+            timeline = await get_exam_timeline(
+                database,
+                normalized,
+                selected_year,
+            )
         except (KeyError, RequestException, RuntimeError, TypeError, ValueError, PyMongoError):
             logger.exception(
                 "Initial exam timeline scrape failed for %s %s",
-                normalized,
+                normalized.value,
                 selected_year,
             )
             raise HTTPException(
@@ -127,12 +138,16 @@ async def refresh_exam(
     _: CurrentAdmin,
     year: Annotated[int | None, Query()] = None,
 ) -> DTO[None]:
-    normalized = exam_name.upper()
-    selected_year = year or (
-        exam_registry.years(normalized)[0]
-        if exam_registry.years(normalized)
-        else None
-    )
+    try:
+        normalized = Exam(exam_name.upper())
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Unknown exam",
+        ) from None
+
+    available_years = exam_registry.years(normalized)
+    selected_year = year or (available_years[0] if available_years else None)
     if selected_year is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -150,5 +165,5 @@ async def refresh_exam(
     background_tasks.add_task(_refresh_exam_timeline, scraper, database)
     return DTO(
         success=True,
-        message=f"{normalized} {selected_year} timeline refresh started",
+        message=f"{normalized.value} {selected_year} timeline refresh started",
     )

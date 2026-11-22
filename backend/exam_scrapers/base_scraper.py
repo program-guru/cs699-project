@@ -4,9 +4,11 @@ from typing import Any, ClassVar
 import requests
 from bs4 import BeautifulSoup
 
+from models.catalog import Exam
+
 
 class BaseExamScraper(ABC):
-    exam_name: ClassVar[str]
+    exam_name: ClassVar[Exam]
     year: ClassVar[int]
     base_url: str
     source_url: str
