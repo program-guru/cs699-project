@@ -1,8 +1,9 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Query
+from models.catalog import College, Department
 from models.dto import DTO
-from models.misc import CollegeOption, DepartmentOption, Stats
+from models.misc import Stats
 from service.misc import get_colleges, get_course_stats, get_departments
 
 from api.dependencies import DBSession
@@ -19,22 +20,21 @@ async def get_statistics(database: DBSession) -> DTO[Stats]:
     )
 
 
-@router.get("/colleges", response_model=DTO[list[CollegeOption]])
-async def list_colleges(database: DBSession) -> DTO[list[CollegeOption]]:
+@router.get("/colleges", response_model=DTO[list[College]])
+async def list_colleges() -> DTO[list[College]]:
     return DTO(
         success=True,
         message="Colleges retrieved successfully",
-        data=await get_colleges(database),
+        data=get_colleges(),
     )
 
 
-@router.get("/departments", response_model=DTO[list[DepartmentOption]])
+@router.get("/departments", response_model=DTO[list[Department]])
 async def list_departments(
-    database: DBSession,
-    college_id: Annotated[str | None, Query()] = None,
-) -> DTO[list[DepartmentOption]]:
+    college_name: Annotated[College | None, Query()] = None,
+) -> DTO[list[Department]]:
     return DTO(
         success=True,
         message="Departments retrieved successfully",
-        data=await get_departments(database, college_id),
+        data=get_departments(college_name),
     )

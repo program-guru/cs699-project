@@ -3,15 +3,14 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, HttpUrl
 
+from models.catalog import College, Department
+
 PyObjectId = Annotated[str, BeforeValidator(str)]
 
 
 class Course(BaseModel):
-    college_id: str
-    college_name: str
-
-    department_id: str
-    department_name: str
+    college_name: College
+    department_name: Department
 
     course_code: str | None = None
     title: str
@@ -36,9 +35,7 @@ class Course(BaseModel):
         arbitrary_types_allowed=True,
         json_schema_extra={
             "example": {
-                "college_id": "iitb",
                 "college_name": "IIT Bombay",
-                "department_id": "cse",
                 "department_name": "Computer Science and Engineering",
                 "course_code": "CS101",
                 "title": "Introduction to Computer Science",
@@ -74,3 +71,7 @@ class CoursePage(BaseModel):
 
 class SimilarCourse(CourseRead):
     score: float
+
+class DeleteCoursesRequest(BaseModel):
+    college_name: College
+    department_name: Department

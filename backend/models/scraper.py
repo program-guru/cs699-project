@@ -1,30 +1,14 @@
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel
+
+from models.catalog import College, Department
 
 
 class ScrapeRequest(BaseModel):
-    college_id: str | None = None
-    department_id: str | None = None
-
-    @model_validator(mode="after")
-    def require_college_for_department(self) -> "ScrapeRequest":
-        if self.department_id and not self.college_id:
-            raise ValueError("college_id is required when department_id is provided")
-        return self
-
-
-class DeleteCoursesRequest(BaseModel):
-    college_id: str = Field(min_length=1)
-    department_id: str | None = Field(default=None, min_length=1)
-
-
-class ScrapeSource(BaseModel):
-    college_id: str
-    department_id: str
-    college_name: str
-    department_name: str
+    college_name: College
+    department_name: Department
 
 
 class ScrapeResult(BaseModel):
-    college_id: str
-    department_id: str
+    college_name: College
+    department_name: Department
     count: int

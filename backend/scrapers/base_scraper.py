@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
+from models.catalog import College, Department
 from models.course import Course
 from pydantic import HttpUrl, TypeAdapter
 
@@ -11,10 +12,8 @@ RawCourse = dict[str, Any]
 
 
 class BaseCourseScraper(ABC):
-    college_id: str
-    college_name: str
-    department_id: str
-    department_name: str
+    college_name: ClassVar[College]
+    department_name: ClassVar[Department]
     base_url: str
     request_headers: ClassVar[dict[str, str]] = {}
 
@@ -86,9 +85,7 @@ class BaseCourseScraper(ABC):
         }
 
         return Course(
-            college_id=self.college_id,
             college_name=self.college_name,
-            department_id=self.department_id,
             department_name=self.department_name,
             course_code=raw.get("course_code"),
             title=raw["title"],

@@ -1,16 +1,15 @@
 from typing import ClassVar
 
 from bs4 import BeautifulSoup
-
+from models.catalog import College, Department
 from models.course import Course
+
 from scrapers.base_scraper import BaseCourseScraper, RawCourse
 
 
 class IITBCSEScraper(BaseCourseScraper):
-    college_id = "iitb"
-    college_name = "IIT Bombay"
-    department_id = "cse"
-    department_name = "Computer Science and Engineering"
+    college_name = College.IITB
+    department_name = Department.CSE
 
     base_url = "https://www.cse.iitb.ac.in/~internal-live/api/courses/"
     seasonal_urls: ClassVar[tuple[tuple[str, str], ...]] = (

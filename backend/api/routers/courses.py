@@ -1,11 +1,19 @@
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
-from models.course import Course, CoursePage, CourseRead, SimilarCourse
+from models.catalog import College, Department
+from models.course import (
+    Course,
+    CoursePage,
+    CourseRead,
+    DeleteCoursesRequest,
+    SimilarCourse,
+)
 from models.dto import DTO
 from service.course import (
     create_course,
     delete_course,
+    delete_courses,
     find_similar_courses,
     get_course,
     list_courses,
@@ -21,8 +29,8 @@ router = APIRouter(prefix="/courses", tags=["courses"])
 @router.get("/", response_model=DTO[CoursePage])
 async def get_courses(
     database: DBSession,
-    college_id: Annotated[str | None, Query()] = None,
-    department_id: Annotated[str | None, Query()] = None,
+    college_name: Annotated[College | None, Query()] = None,
+    department_name: Annotated[Department | None, Query()] = None,
     search: Annotated[str | None, Query()] = None,
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
@@ -32,8 +40,8 @@ async def get_courses(
         message="Courses retrieved successfully",
         data=await list_courses(
             database,
-            college_id,
-            department_id,
+            college_name,
+            department_name,
             search,
             page,
             page_size,
@@ -137,3 +145,22 @@ async def delete_course_record(
             detail="Course not found",
         )
     return DTO(success=True, message="Course deleted successfully")
+
+
+@router.delete("/", response_model=DTO[None])
+async def delete_scraped_courses(
+    request: DeleteCoursesRequest,
+    database: DBSession,
+    _: CurrentAdmin,
+) -> DTO[int]:
+
+    deleted_count = await delete_courses(
+        database,
+        college_name=request.college_name,
+        department_name=request.department_name,
+    )
+    return DTO(
+        success=True,
+        message=f"Deleted {deleted_count} course(s)",
+        data=None,
+    )

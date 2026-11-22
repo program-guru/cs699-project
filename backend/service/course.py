@@ -4,6 +4,7 @@ from typing import Literal
 from bson import ObjectId
 from bson.errors import InvalidId
 from core.config import settings
+from models.catalog import College, Department
 from models.course import Course, CoursePage, CourseRead, SimilarCourse
 from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.operations import SearchIndexModel
@@ -22,8 +23,8 @@ async def ensure_vector_index(database: AsyncDatabase) -> None:
                 "numDimensions": settings.EMBEDDING_DIMENSIONS,
                 "similarity": "cosine",
             },
-            {"type": "filter", "path": "college_id"},
-            {"type": "filter", "path": "department_id"},
+            {"type": "filter", "path": "college_name"},
+            {"type": "filter", "path": "department_name"},
             {"type": "filter", "path": "_id"},
         ]
     }
@@ -37,6 +38,7 @@ async def ensure_vector_index(database: AsyncDatabase) -> None:
                 definition=definition,
             )
         )
+
 
 def _course_id(course_id: str) -> ObjectId | None:
     try:
@@ -70,17 +72,17 @@ async def update_course_embedding(
 
 async def list_courses(
     database: AsyncDatabase,
-    college_id: str | None = None,
-    department_id: str | None = None,
+    college_name: College | None = None,
+    department_name: Department | None = None,
     search: str | None = None,
     page: int = 1,
     page_size: int = 20,
 ) -> CoursePage:
     filters: dict[str, object] = {}
-    if college_id is not None:
-        filters["college_id"] = college_id
-    if department_id is not None:
-        filters["department_id"] = department_id
+    if college_name is not None:
+        filters["college_name"] = college_name
+    if department_name is not None:
+        filters["department_name"] = department_name
     if search:
         search_pattern = re.escape(search)
         filters["$or"] = [
@@ -93,9 +95,8 @@ async def list_courses(
     collection = database["courses"]
     total = await collection.count_documents(filters)
     cursor = (
-        collection
-        .find(filters, {"embedding": 0, "embedding_model": 0})
-        .sort([("college_id", 1), ("department_id", 1), ("course_code", 1)])
+        collection.find(filters, {"embedding": 0, "embedding_model": 0})
+        .sort([("college_name", 1), ("department_name", 1), ("course_code", 1)])
         .skip((page - 1) * page_size)
         .limit(page_size)
     )
@@ -143,7 +144,7 @@ async def find_similar_courses(
 
     primary = await database["courses"].find_one(
         {"_id": object_id},
-        {"embedding": 1, "embedding_model": 1, "department_id": 1},
+        {"embedding": 1, "embedding_model": 1, "department_name": 1},
     )
     if primary is None:
         return "not_found"
@@ -155,7 +156,7 @@ async def find_similar_courses(
 
     vector_filter: dict[str, object] = {"_id": {"$ne": object_id}}
     if not cross_department:
-        vector_filter["department_id"] = primary["department_id"]
+        vector_filter["department_name"] = primary["department_name"]
 
     cursor = await database["courses"].aggregate(
         [
@@ -187,14 +188,13 @@ async def delete_course(
     return "deleted" if result.deleted_count > 0 else "not_found"
 
 
-async def delete_courses_by_source(
+async def delete_courses(
     database: AsyncDatabase,
-    college_id: str,
-    department_id: str | None = None,
+    college_name: College,
+    department_name: Department,
 ) -> int:
-    filters: dict[str, str] = {"college_id": college_id}
-    if department_id is not None:
-        filters["department_id"] = department_id
+    filters: dict[str, College | Department] = {"college_name": college_name}
+    filters["department_name"] = department_name
 
     result = await database["courses"].delete_many(filters)
     return result.deleted_count

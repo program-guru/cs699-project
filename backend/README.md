@@ -89,28 +89,14 @@ All admin passwords are hashed before being stored.
 The protected `GET /scrape/sources` endpoint lists registered scrape sources.
 The protected `POST /scrape/` endpoint starts background refreshes and returns
 `202 Accepted`. A valid `access_token` cookie is required for both endpoints.
-Omit both IDs to scrape all registered sources, pass only `college_id` to
-scrape every registered department for that college, or pass both IDs to
-scrape one department:
+Pass the college and department names to scrape one registered source:
 
 ```bash
-# All registered sources
+# Scrape one department
 curl -b cookies.txt -X POST \
   http://localhost:8000/scrape/ \
   -H "Content-Type: application/json" \
-  -d '{}'
-
-# Every registered department at a college
-curl -b cookies.txt -X POST \
-  http://localhost:8000/scrape/ \
-  -H "Content-Type: application/json" \
-  -d '{"college_id":"iitm"}'
-
-# One registered department
-curl -b cookies.txt -X POST \
-  http://localhost:8000/scrape/ \
-  -H "Content-Type: application/json" \
-  -d '{"college_id":"iitm","department_id":"cse"}'
+  -d '{"college_name":"IIT Madras","department_name":"Computer Science and Engineering"}'
 ```
 
 Each background task scrapes and validates its source, then replaces the
@@ -123,8 +109,8 @@ uses a delete-then-insert sequence instead. Use a replica set for atomic
 refreshes.
 
 The protected `DELETE /scrape/courses` endpoint permanently deletes courses
-from a college or from one department within a college. Provide `college_id`
-and optionally `department_id` in the JSON body. The response includes the
+from a college or from one department within a college. Provide `college_name`
+and optionally `department_name` in the JSON body. The response includes the
 number of deleted courses.
 
 ## Course API
@@ -133,14 +119,14 @@ Course reads are public:
 
 - `GET /courses/` lists courses with `page` (default `1`) and `page_size`
   (default `20`, maximum `100`) pagination parameters. It also supports
-  optional `college_id` and `department_id` filters. The response includes
+  optional `college_name` and `department_name` filters. The response includes
   `courses`, `page`, `page_size`, `total`, and `total_pages`.
 - `GET /misc/stats` returns the total number of courses and distinct
   universities currently tracked.
 - `GET /misc/colleges` returns the distinct colleges available for course
   filters.
 - `GET /misc/departments` returns the distinct departments available for course
-  filters. It accepts an optional `college_id` query parameter to limit the
+  filters. It accepts an optional `college_name` query parameter to limit the
   results to one college.
 - `GET /courses/{course_id}` retrieves one course by its MongoDB ID.
 - `GET /courses/{course_id}/similar` retrieves semantically similar courses.

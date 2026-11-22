@@ -2,16 +2,14 @@ import re
 from typing import ClassVar
 
 from bs4 import BeautifulSoup
+from models.catalog import College, Department
 
 from scrapers.base_scraper import BaseCourseScraper, RawCourse
 
 
 class IITMCSEScraper(BaseCourseScraper):
-    college_id = "iitm"
-    college_name = "IIT Madras"
-
-    department_id = "cse"
-    department_name = "Computer Science and Engineering"
+    college_name = College.IITM
+    department_name = Department.CSE
 
     base_url = "https://www.cse.iitm.ac.in/courses.php"
     request_headers: ClassVar[dict[str, str]] = {
