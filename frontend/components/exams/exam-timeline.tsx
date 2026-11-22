@@ -235,7 +235,7 @@ export function ExamTimeline({ examName, year }: ExamTimelineProps) {
                     {index < sortedEvents.length - 1 ? (
                       <span
                         className={`absolute top-12 h-[calc(100%-1.5rem)] w-px ${
-                          isCompleted ? "bg-destructive" : "bg-border"
+                          isCompleted ? "bg-primary" : "bg-border"
                         }`}
                         aria-hidden="true"
                       />
@@ -243,7 +243,7 @@ export function ExamTimeline({ examName, year }: ExamTimelineProps) {
                     <span
                       className={`relative z-10 flex size-9 items-center justify-center rounded-full border transition-transform duration-200 group-hover:scale-105 ${
                         isCompleted
-                          ? "border-destructive/30 bg-destructive text-destructive-foreground"
+                          ? "border-primary/30 bg-primary text-primary-foreground"
                           : "border-border bg-background text-muted-foreground"
                       }`}
                       aria-label={isCompleted ? "Completed" : "Upcoming"}
@@ -260,7 +260,7 @@ export function ExamTimeline({ examName, year }: ExamTimelineProps) {
                     <div className="flex flex-wrap items-center gap-2">
                       <h2
                         className={`font-semibold ${
-                          isCompleted ? "text-destructive" : "text-foreground"
+                          isCompleted ? "text-primary" : "text-foreground"
                         }`}
                       >
                         {event.activity}
@@ -275,7 +275,7 @@ export function ExamTimeline({ examName, year }: ExamTimelineProps) {
                       <div
                         className={`mt-2 text-sm font-medium ${
                           isCompleted
-                            ? "text-destructive"
+                            ? "text-primary"
                             : "text-primary"
                         }`}
                       >
