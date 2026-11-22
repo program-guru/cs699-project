@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 import {
   Card,
@@ -17,105 +18,141 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
+import { getApiErrorMessage } from "@/lib/features/api/error"
+import {
+  useDeleteAdminMutation,
+  useUpdateAdminMutation,
+} from "@/lib/features/admin/admin.api"
+import { useLogoutMutation } from "@/lib/features/auth/auth.api"
+import { clearAuthenticatedUser } from "@/lib/features/auth/auth.slice"
+import { useAppDispatch, useAppSelector } from "@/lib/hooks"
 import type { Admin } from "@/types/admin"
+import { toast } from "@/components/ui/toast"
 
 interface AdminFormCardProps {
-  admin: Admin | null
-  isSaving: boolean
-  isDeleting: boolean
-  isLoading: boolean
-  onSave: (values: { username: string; password: string }) => void | Promise<void>
-  onDelete: () => void
+  admin: Admin
+  onDeleted: () => void
 }
 
 export function AdminFormCard({
   admin,
-  isSaving,
-  isDeleting,
-  isLoading,
-  onSave,
-  onDelete,
+  onDeleted,
 }: AdminFormCardProps) {
-  const [username, setUsername] = useState(admin?.username ?? "")
+  const router = useRouter()
+  const dispatch = useAppDispatch()
+  const authenticatedUserId = useAppSelector((state) => state.auth.user?._id)
+  const [updateAdmin, { isLoading: isSaving }] = useUpdateAdminMutation()
+  const [deleteAdmin, { isLoading: isDeleting }] = useDeleteAdminMutation()
+  const [logout] = useLogoutMutation()
+  const [username, setUsername] = useState(admin.username)
   const [password, setPassword] = useState("")
-  const isEditing = admin !== null
+
+  const save = async () => {
+    try {
+      await updateAdmin({
+        adminId: admin._id,
+        admin: {
+          username: username.trim(),
+          ...(password && { password }),
+        },
+      }).unwrap()
+      toast.add({
+        type: "success",
+        title: "Administrator updated",
+        description: "The administrator account was updated successfully.",
+      })
+    } catch (requestError) {
+      toast.add({
+        type: "error",
+        title: "Unable to update admin",
+        description: getApiErrorMessage(requestError, "Please try again."),
+      })
+    }
+  }
+
+  const remove = async () => {
+    try {
+      await deleteAdmin(admin._id).unwrap()
+      toast.add({
+        type: "success",
+        title: "Administrator deleted",
+        description: "The administrator account was deleted successfully.",
+      })
+      if (admin._id === authenticatedUserId) {
+        await logout().unwrap()
+        dispatch(clearAuthenticatedUser())
+        router.replace("/login")
+        return
+      }
+      onDeleted()
+    } catch (requestError) {
+      toast.add({
+        type: "error",
+        title: "Unable to delete admin",
+        description: getApiErrorMessage(requestError, "Please try again."),
+      })
+    }
+  }
 
   return (
-    <Card className="min-h-96">
+    <Card className="h-full">
       <CardHeader>
-        <CardTitle>{isEditing ? "Edit admin" : "Add admin"}</CardTitle>
+        <CardTitle>Edit admin</CardTitle>
         <CardDescription>
-          {isEditing
-            ? "Update the username or optionally set a new password."
-            : "Create a new administrator account."}
+          Update the username or optionally set a new password.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex flex-col gap-6" aria-label="Loading admin form">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        ) : (
-          <form
-            id="admin-form"
-            className="flex flex-col gap-6"
-            onSubmit={(event) => {
-              event.preventDefault()
-              void onSave({ username: username.trim(), password })
-            }}
-          >
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="admin-username">Username</FieldLabel>
-                <Input
-                  id="admin-username"
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
-                  required
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="admin-password">
-                  {isEditing ? "New password" : "Password"}
-                </FieldLabel>
-                <Input
-                  id="admin-password"
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required={!isEditing}
-                />
-                {isEditing && (
-                  <FieldDescription>
-                    Leave blank to keep the current password.
-                  </FieldDescription>
-                )}
-              </Field>
-            </FieldGroup>
-          </form>
-        )}
+      <CardContent className="flex-1">
+        <form
+          id="admin-form"
+          className="flex flex-col gap-6"
+          onSubmit={(event) => {
+            event.preventDefault()
+            void save()
+          }}
+        >
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="admin-username">Username</FieldLabel>
+              <Input
+                id="admin-username"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                required
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="admin-password">New password</FieldLabel>
+              <Input
+                id="admin-password"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+              <FieldDescription>
+                Leave blank to keep the current password.
+              </FieldDescription>
+            </Field>
+          </FieldGroup>
+        </form>
       </CardContent>
       <CardFooter className="justify-end gap-3">
-        {isEditing && (
-          <Button
-            type="button"
-            variant="destructive"
-            disabled={isSaving || isDeleting}
-            onClick={() => {
-              if (
-                window.confirm(
-                  "Delete this administrator? This action cannot be undone.",
-                )
-              ) {
-                onDelete()
-              }
-            }}
-          >
-            Delete
-          </Button>
-        )}
+        <Button
+          type="button"
+          variant="destructive"
+          disabled={isSaving || isDeleting}
+          onClick={() => {
+            if (
+              window.confirm(
+                "Delete this administrator? This action cannot be undone.",
+              )
+            ) {
+              void remove()
+            }
+          }}
+        >
+          Delete
+        </Button>
         <Button
           type="submit"
           form="admin-form"

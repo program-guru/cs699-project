@@ -177,7 +177,7 @@ export function ScrapeControlCard() {
   }
 
   return (
-    <Card className="h-fit">
+    <Card className="min-h-0 xl:flex-1">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           Scrape courses
@@ -186,7 +186,7 @@ export function ScrapeControlCard() {
           Refresh course data from registered college websites.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1">
         <FieldGroup>
           <Field>
             <FieldLabel htmlFor="scrape-scope">Scrape scope</FieldLabel>
@@ -282,7 +282,7 @@ export function ScrapeControlCard() {
           ) : null}
         </FieldGroup>
       </CardContent>
-      <CardFooter className="flex-col items-stretch">
+      <CardFooter className="mt-auto flex-col items-stretch">
         <Button
           className="w-full"
           disabled={!canStartScrape}
