@@ -23,6 +23,15 @@ class IITBCSEScraper(BaseCourseScraper):
         del soup
         raise NotImplementedError("Use scrape() to process the JSON API response.")
 
+    @staticmethod
+    def parse_instructor(value: object) -> str | None:
+        if not isinstance(value, str):
+            return None
+
+        text = BeautifulSoup(value, "html.parser").get_text(" ", strip=True)
+        text = " ".join(text.split())
+        return text or None
+
     def scrape(self) -> list[Course]:
         records: list[Course] = []
 
@@ -63,6 +72,9 @@ class IITBCSEScraper(BaseCourseScraper):
                         [prerequisite_text]
                         if prerequisite_text and prerequisite_text.upper() != "NIL"
                         else []
+                    ),
+                    "instructor": self.parse_instructor(
+                        item.get(f"{semester.lower()}instructor")
                     ),
                     "semester_offered": semester,
                     "source_url": url,
