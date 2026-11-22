@@ -22,15 +22,18 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
+import { toast } from "@/components/ui/toast"
+import { getApiErrorMessage } from "@/lib/features/api/error"
+import {
+  useCreateCourseMutation,
+  useDeleteCourseMutation,
+  useUpdateCourseMutation,
+} from "@/lib/features/courses/courses.api"
 import type { Course, CourseRequest } from "@/types/course"
 
 interface CourseFormCardProps {
   course: Course | null
-  isSaving: boolean
-  isDeleting: boolean
   isLoading: boolean
-  onSave: (values: CourseRequest) => void | Promise<void>
-  onDelete: () => void
   onCancel: () => void
 }
 
@@ -40,16 +43,8 @@ function nullableNumber(value: string) {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-export function CourseFormCard({
-  course,
-  isSaving,
-  isDeleting,
-  isLoading,
-  onSave,
-  onDelete,
-  onCancel,
-}: CourseFormCardProps) {
-  const [values, setValues] = useState<CourseRequest>(() => ({
+function getInitialValues(course: Course | null): CourseRequest {
+  return {
     college_id: course?.college_id ?? "",
     college_name: course?.college_name ?? "",
     department_id: course?.department_id ?? "",
@@ -66,7 +61,17 @@ export function CourseFormCard({
     syllabus_url: course?.syllabus_url ?? null,
     source_url: course?.source_url ?? "",
     raw_extra: course?.raw_extra ?? {},
-  }))
+  }
+}
+
+export function CourseFormCard({
+  course,
+  isLoading,
+  onCancel,
+}: CourseFormCardProps) {
+  const [values, setValues] = useState<CourseRequest>(() =>
+    getInitialValues(course),
+  )
   const [extraFields, setExtraFields] = useState(() =>
     Object.entries(course?.raw_extra ?? {}).map(([key, value]) => ({
       key,
@@ -74,6 +79,63 @@ export function CourseFormCard({
     })),
   )
   const [rawExtraError, setRawExtraError] = useState<string | null>(null)
+  const [createCourse, createState] = useCreateCourseMutation()
+  const [updateCourse, updateState] = useUpdateCourseMutation()
+  const [deleteCourse, deleteState] = useDeleteCourseMutation()
+  const isSaving = createState.isLoading || updateState.isLoading
+  const isDeleting = deleteState.isLoading
+
+  const save = async (courseValues: CourseRequest) => {
+    try {
+      if (course) {
+        await updateCourse({
+          courseId: course._id,
+          course: courseValues,
+        }).unwrap()
+        toast.add({
+          type: "success",
+          title: "Course updated",
+          description: "The course was updated successfully.",
+        })
+      } else {
+        await createCourse(courseValues).unwrap()
+        toast.add({
+          type: "success",
+          title: "Course created",
+          description: "The course was created successfully.",
+        })
+        setValues(getInitialValues(null))
+        setExtraFields([])
+      }
+      onCancel()
+    } catch (requestError) {
+      toast.add({
+        type: "error",
+        title: course ? "Unable to update course" : "Unable to create course",
+        description: getApiErrorMessage(requestError, "Please try again."),
+      })
+    }
+  }
+
+  const remove = async () => {
+    if (!course) return
+
+    try {
+      await deleteCourse(course._id).unwrap()
+      toast.add({
+        type: "success",
+        title: "Course deleted",
+        description: "The course was deleted successfully.",
+      })
+      onCancel()
+    } catch (requestError) {
+      toast.add({
+        type: "error",
+        title: "Unable to delete course",
+        description: getApiErrorMessage(requestError, "Please try again."),
+      })
+    }
+  }
 
   const update = <K extends keyof CourseRequest>(
     key: K,
@@ -133,7 +195,7 @@ export function CourseFormCard({
                   return
                 }
                 setRawExtraError(null)
-                void onSave({
+                void save({
                   ...values,
                   raw_extra: parsedRawExtra,
                   prerequisites: values.prerequisites
@@ -394,7 +456,7 @@ export function CourseFormCard({
             disabled={isSaving || isDeleting}
             onClick={() => {
               if (window.confirm("Delete this course? This action cannot be undone.")) {
-                onDelete()
+                void remove()
               }
             }}
           >

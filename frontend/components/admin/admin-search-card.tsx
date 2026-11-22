@@ -35,15 +35,15 @@ export function AdminSearchCard({
   onSelect,
 }: AdminSearchCardProps) {
   return (
-    <Card className="min-h-96">
+    <Card className="h-full min-h-96">
       <CardHeader>
         <CardTitle>Admins</CardTitle>
         <CardDescription>Search and select an admin to edit</CardDescription>
       </CardHeader>
-      <CardContent>
-        <Command className="rounded-none border">
+      <CardContent className="flex min-h-0 flex-1 flex-col">
+        <Command className="min-h-0 flex-1 rounded-none border">
           <CommandInput placeholder="Search usernames..." />
-          <ScrollArea className="max-h-85">
+          <ScrollArea className="min-h-0 flex-1">
             <CommandList className="max-h-none overflow-visible">
               <CommandEmpty>
                 {isLoading ? (

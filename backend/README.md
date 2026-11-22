@@ -89,14 +89,43 @@ All admin passwords are hashed before being stored.
 The protected `GET /scrape/sources` endpoint lists registered scrape sources.
 The protected `POST /scrape/` endpoint starts background refreshes and returns
 `202 Accepted`. A valid `access_token` cookie is required for both endpoints.
+<<<<<<< HEAD
 Pass the college and department names to scrape one registered source:
+=======
+Omit both IDs to scrape all registered sources, pass only `college_id` to
+scrape every registered department for that college, pass only
+`department_id` to scrape that department at every college, or pass both IDs
+to scrape one department:
+>>>>>>> origin/main
 
 ```bash
 # Scrape one department
 curl -b cookies.txt -X POST \
   http://localhost:8000/scrape/ \
   -H "Content-Type: application/json" \
+<<<<<<< HEAD
   -d '{"college_name":"IIT Madras","department_name":"Computer Science and Engineering"}'
+=======
+  -d '{}'
+
+# Every registered department at a college
+curl -b cookies.txt -X POST \
+  http://localhost:8000/scrape/ \
+  -H "Content-Type: application/json" \
+  -d '{"college_id":"iitm"}'
+
+# One registered department
+curl -b cookies.txt -X POST \
+  http://localhost:8000/scrape/ \
+  -H "Content-Type: application/json" \
+  -d '{"college_id":"iitm","department_id":"cse"}'
+
+# The matching department at every college
+curl -b cookies.txt -X POST \
+  http://localhost:8000/scrape/ \
+  -H "Content-Type: application/json" \
+  -d '{"department_id":"cse"}'
+>>>>>>> origin/main
 ```
 
 Each background task scrapes and validates its source, then replaces the
@@ -109,9 +138,17 @@ uses a delete-then-insert sequence instead. Use a replica set for atomic
 refreshes.
 
 The protected `DELETE /scrape/courses` endpoint permanently deletes courses
+<<<<<<< HEAD
 from a college or from one department within a college. Provide `college_name`
 and optionally `department_name` in the JSON body. The response includes the
 number of deleted courses.
+=======
+using the same optional `college_id` and `department_id` filters as the scrape
+endpoint. Omit both IDs to delete all courses, pass only `college_id` to delete
+all courses for that college, pass only `department_id` to delete that
+department across colleges, or provide both IDs to delete one department at
+one college. The response includes the number of deleted courses.
+>>>>>>> origin/main
 
 ## Course API
 

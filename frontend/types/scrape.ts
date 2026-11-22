@@ -13,7 +13,7 @@ export interface ScrapeRequest {
 }
 
 export interface DeleteCoursesRequest {
-  college_id: string
+  college_id?: string
   department_id?: string
 }
 
