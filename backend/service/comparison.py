@@ -1,12 +1,14 @@
 import asyncio
 import json
 import logging
+import time
 from datetime import UTC, datetime
 from typing import Any, Literal
 
 from core.config import settings
 from models.compare import ComparisonSummary
 from models.course import CourseRead
+from pydantic import ValidationError
 from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.errors import PyMongoError
 
@@ -92,22 +94,53 @@ async def _generate(
 ) -> ComparisonSummary:
     last_error: Exception | None = None
     for attempt in range(1, settings.LLM_MAX_ATTEMPTS + 1):
+        attempt_started_at = time.monotonic()
         try:
             text, model = await generate_text(SYSTEM_PROMPT, prompt)
             generated_at = datetime.now(UTC)
-            return _parse_summary(
+            summary = _parse_summary(
                 text,
                 primary_course_id,
                 secondary_course_id,
                 model,
                 generated_at,
             )
+            elapsed_ms = round((time.monotonic() - attempt_started_at) * 1000)
+            logger.info(
+                "Comparison generation succeeded: "
+                "primary_course_id=%s secondary_course_id=%s "
+                "attempt=%d model=%s elapsed_ms=%d",
+                primary_course_id,
+                secondary_course_id,
+                attempt,
+                model,
+                elapsed_ms,
+            )
+            return summary
         except (LLMError, ValueError) as error:
             # The free router may pick a different model on each retry.
-            logger.warning("Comparison attempt %d failed: %s", attempt, error)
+            elapsed_ms = round((time.monotonic() - attempt_started_at) * 1000)
+            logger.warning(
+                "Comparison generation failed: "
+                "primary_course_id=%s secondary_course_id=%s "
+                "attempt=%d elapsed_ms=%d error=%s",
+                primary_course_id,
+                secondary_course_id,
+                attempt,
+                elapsed_ms,
+                error,
+            )
             last_error = error
             if attempt < settings.LLM_MAX_ATTEMPTS:
                 await asyncio.sleep(attempt)
+                logger.info(
+                    "Comparison retry scheduled: "
+                    "primary_course_id=%s secondary_course_id=%s "
+                    "next_attempt=%d",
+                    primary_course_id,
+                    secondary_course_id,
+                    attempt + 1,
+                )
     raise LLMError("Unable to generate a summary") from last_error
 
 
@@ -119,6 +152,12 @@ async def get_comparison_summary(
     primary = await get_course(database, primary_id)
     secondary = await get_course(database, secondary_id)
     if primary is None or secondary is None:
+        logger.warning(
+            "Comparison lookup failed: primary_course_id=%s "
+            "secondary_course_id=%s reason=course_not_found",
+            primary_id,
+            secondary_id,
+        )
         return "not_found"
 
     # Canonical order so A-vs-B and B-vs-A share one cache entry and one prompt.
@@ -138,10 +177,49 @@ async def get_comparison_summary(
         "secondary_course_id": secondary_course_id,
     }
 
-    cached = await cache.find_one(cache_filter)
+    try:
+        cached = await cache.find_one(cache_filter)
+    except PyMongoError:
+        logger.exception(
+            "Comparison cache lookup failed: primary_course_id=%s "
+            "secondary_course_id=%s",
+            primary_course_id,
+            secondary_course_id,
+        )
+        cached = None
+
     if cached:
-        summary = ComparisonSummary.model_validate(cached)
-        return summary
+        try:
+            summary = ComparisonSummary.model_validate(cached)
+        except ValidationError:
+            logger.exception(
+                "Comparison cache entry failed validation: "
+                "primary_course_id=%s secondary_course_id=%s",
+                primary_course_id,
+                secondary_course_id,
+            )
+            logger.info(
+                "Comparison cache miss: primary_course_id=%s "
+                "secondary_course_id=%s reason=invalid_cached_entry",
+                primary_course_id,
+                secondary_course_id,
+            )
+        else:
+            logger.info(
+                "Comparison cache hit: primary_course_id=%s "
+                "secondary_course_id=%s model=%s",
+                primary_course_id,
+                secondary_course_id,
+                summary.model,
+            )
+            return summary
+    else:
+        logger.info(
+            "Comparison cache miss: primary_course_id=%s "
+            "secondary_course_id=%s",
+            primary_course_id,
+            secondary_course_id,
+        )
 
     summary = await _generate(
         prompt,
@@ -155,9 +233,17 @@ async def get_comparison_summary(
             summary.model_dump(mode="json"),
             upsert=True,
         )
+        logger.info(
+            "Comparison cache write succeeded: primary_course_id=%s "
+            "secondary_course_id=%s model=%s",
+            primary_course_id,
+            secondary_course_id,
+            summary.model,
+        )
     except PyMongoError:
         logger.exception(
-            "Failed to cache comparison %s/%s",
+            "Comparison cache write failed: primary_course_id=%s "
+            "secondary_course_id=%s",
             primary_course_id,
             secondary_course_id,
         )

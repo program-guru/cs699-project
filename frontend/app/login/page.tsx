@@ -35,7 +35,7 @@ export default function LoginPage() {
         throw new Error("Login response did not include the authenticated user.");
       }
       dispatch(setAuthenticatedUser(response.data));
-      router.replace("/admin");
+      router.replace("/dashboard");
     } catch {
       setSubmitError("Unable to sign in. Please try again.");
     }
