@@ -2,7 +2,11 @@ from models.catalog import College, Department
 
 from scrapers.base_scraper import BaseCourseScraper
 from scrapers.strategies.iitb_cse_scraper import IITBCSEScraper
-from scrapers.strategies.iitm_cse_scraper import IITMCSEScraper
+from scrapers.strategies.iitb_ee_scraper import IITBEEScraper
+from scrapers.strategies.iitd_cse_scraper import IITDCSEScraper
+from scrapers.strategies.iitd_ee_scraper import IITDEEScraper
+from scrapers.strategies.iith_cse_scraper import IITHCSEScraper
+from scrapers.strategies.iitk_cse_scraper import IITKCSEScraper
 
 Key = tuple[College, Department]
 
@@ -35,5 +39,9 @@ class ScraperRegistry:
 
 
 registry = ScraperRegistry()
-registry.register(IITMCSEScraper)
 registry.register(IITBCSEScraper)
+registry.register(IITHCSEScraper)
+registry.register(IITDCSEScraper)
+registry.register(IITKCSEScraper)
+registry.register(IITBEEScraper)
+registry.register(IITDEEScraper)
