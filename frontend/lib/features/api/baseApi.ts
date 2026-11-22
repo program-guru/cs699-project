@@ -11,7 +11,7 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: apiUrl,
   credentials: "include",
-  timeout: 5000,
+  timeout: 10000,
   prepareHeaders: (headers) => {
     headers.set("Content-Type", "application/json")
     return headers

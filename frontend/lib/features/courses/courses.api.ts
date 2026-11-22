@@ -7,7 +7,6 @@ import type {
   CoursesResponse,
   DeleteCoursesRequest,
   DeleteCoursesResponse,
-  SimilarCoursesResponse,
 } from "@/types/course"
 
 export const coursesApi = baseApi.injectEndpoints({
@@ -30,15 +29,6 @@ export const coursesApi = baseApi.injectEndpoints({
       providesTags: (result, error, courseId) => [
         { type: "Course", id: courseId },
       ],
-    }),
-    getSimilarCourses: builder.query<
-      SimilarCoursesResponse,
-      { courseId: string; crossDepartment?: boolean }
-    >({
-      query: ({ courseId, crossDepartment = false }) => ({
-        url: `/courses/${encodeURIComponent(courseId)}/similar`,
-        params: { cross_department: crossDepartment },
-      }),
     }),
     createCourse: builder.mutation<CourseResponse, CourseRequest>({
       query: (course) => ({
@@ -88,9 +78,7 @@ export const coursesApi = baseApi.injectEndpoints({
 
 export const {
   useGetCoursesQuery,
-  useLazyGetCoursesQuery,
   useGetCourseByIdQuery,
-  useGetSimilarCoursesQuery,
   useCreateCourseMutation,
   useUpdateCourseMutation,
   useDeleteCourseMutation,
