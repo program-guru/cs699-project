@@ -6,7 +6,7 @@ export function proxy(request: NextRequest) {
 
   // Logged-in users should not access the login page
   if (pathname === "/login" && accessToken) {
-    return NextResponse.redirect(new URL("/admin", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   // Protect admin routes
