@@ -47,7 +47,7 @@ async def initialize_database() -> None:
     database = get_database()
     existing_collections = set(await database.list_collection_names())
 
-    for collection_name in ("admins", "courses"):
+    for collection_name in ("admins", "courses", "exam_events"):
         if collection_name not in existing_collections:
             try:
                 await database.create_collection(collection_name)
