@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState } from "react"
 import { Plus, Trash2 } from "lucide-react"
 
@@ -432,6 +433,15 @@ export function CourseFormCard({
         )}
       </CardContent>
       <CardFooter className="shrink-0 justify-end gap-3">
+        {isEditing && (
+          <Button
+            nativeButton={false}
+            render={<Link href={`/compare/${course._id}`} />}
+            variant="secondary"
+          >
+            Compare
+          </Button>
+        )}
         {isEditing && (
           <Button
             type="button"
