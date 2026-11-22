@@ -1,7 +1,6 @@
 from core.config import settings
 from models.catalog import College, Department
 from models.course import Course
-from models.scraper import ScrapeResult
 from pymongo.asynchronous.client_session import AsyncClientSession
 from pymongo.asynchronous.database import AsyncDatabase
 
@@ -18,7 +17,7 @@ async def replace_courses(
     college_name: College,
     department_name: Department,
     records: list[Course],
-) -> ScrapeResult:
+) :
     documents = [course.model_dump(mode="json") for course in records]
     vectors = embed_texts([embedding_text(course) for course in records])
     for document, vector in zip(documents, vectors, strict=True):
@@ -40,9 +39,3 @@ async def replace_courses(
             await session.with_transaction(replace_in_transaction)
     else:
         await replace_in_transaction(None)
-
-    return ScrapeResult(
-        college_name=college_name,
-        department_name=department_name,
-        count=len(documents),
-    )
