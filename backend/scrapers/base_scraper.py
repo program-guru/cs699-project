@@ -50,7 +50,7 @@ class BaseCourseScraper(ABC):
 
         if "validation request" in page_text or "user validation required" in page_text:
             raise RuntimeError(
-                f"IIT Madras returned a validation challenge for {target}. "
+                f"Returned a validation challenge for {target}. "
                 f"HTTP status: {response.status_code}. "
                 f"Final URL: {response.url}. "
                 "Use an authorized data source or a saved HTML snapshot."

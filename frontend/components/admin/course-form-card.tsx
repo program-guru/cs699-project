@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Trash2, X } from "lucide-react"
 
 import {
   Card,
@@ -149,12 +149,29 @@ export function CourseFormCard({
   return (
     <Card className="flex h-[min(60rem,calc(100vh-12rem))] min-h-0 min-w-0 flex-col">
       <CardHeader className="shrink-0">
-        <CardTitle>{isEditing ? "Edit course" : "Add course"}</CardTitle>
-        <CardDescription>
-          {isEditing
-            ? "Update every field in this course record."
-            : "Create a course record with all of its available information."}
-        </CardDescription>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 flex-col gap-1">
+            <CardTitle>{isEditing ? "Edit course" : "Add course"}</CardTitle>
+            <CardDescription>
+              {isEditing
+                ? "Update every field in this course record."
+                : "Create a course record with all of its available information."}
+            </CardDescription>
+          </div>
+          {isEditing ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Close course form"
+              title="Close course form"
+              disabled={isSaving || isDeleting}
+              onClick={onCancel}
+            >
+              <X aria-hidden="true" />
+            </Button>
+          ) : null}
+        </div>
       </CardHeader>
       <CardContent className="min-h-0 flex-1 overflow-hidden">
         {isLoading ? (
@@ -437,19 +454,9 @@ export function CourseFormCard({
           <Button
             nativeButton={false}
             render={<Link href={`/compare/${course._id}`} />}
-            variant="secondary"
+            variant="outline"
           >
             Compare
-          </Button>
-        )}
-        {isEditing && (
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isSaving || isDeleting}
-            onClick={onCancel}
-          >
-            Cancel
           </Button>
         )}
         {isEditing && (
