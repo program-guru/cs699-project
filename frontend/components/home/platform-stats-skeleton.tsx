@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 export function PlatformStatsSkeleton() {
   return (
     <>
-      {["Universities Tracked", "Courses Tracked", "Days left for GATE"].map(
+      {["Universities Tracked", "Courses Tracked", "Exams Tracked"].map(
         (description) => (
           <Card key={description}>
             <CardHeader>
