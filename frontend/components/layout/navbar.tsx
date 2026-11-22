@@ -25,7 +25,7 @@ const navigationItems = [
 ];
 
 const adminNavigationItems = [
-  { href: "/admin", label: "Dashboard" },
+  { href: "/dashboard", label: "Dashboard" },
 ];
 
 export function Navbar() {
@@ -42,22 +42,9 @@ export function Navbar() {
   }
 
   const isActive = (href: string) => {
-    if (href === "/") {
-      return pathname === href;
-    }
-
-    const matchesPath = (candidate: string) =>
-      pathname === candidate || pathname.startsWith(`${candidate}/`);
-
-    return (
-      matchesPath(href) &&
-      ![...navigationItems, ...adminNavigationItems].some(
-        (item) =>
-          item.href !== href &&
-          item.href.length > href.length &&
-          matchesPath(item.href),
-      )
-    );
+    return href === "/"
+      ? pathname === href
+      : pathname === href || pathname.startsWith(`${href}/`);
   };
 
   const linkClassName = (href: string) =>
