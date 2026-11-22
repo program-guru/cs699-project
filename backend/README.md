@@ -90,8 +90,9 @@ The protected `GET /scrape/sources` endpoint lists registered scrape sources.
 The protected `POST /scrape/` endpoint starts background refreshes and returns
 `202 Accepted`. A valid `access_token` cookie is required for both endpoints.
 Omit both IDs to scrape all registered sources, pass only `college_id` to
-scrape every registered department for that college, or pass both IDs to
-scrape one department:
+scrape every registered department for that college, pass only
+`department_id` to scrape that department at every college, or pass both IDs
+to scrape one department:
 
 ```bash
 # All registered sources
@@ -111,6 +112,12 @@ curl -b cookies.txt -X POST \
   http://localhost:8000/scrape/ \
   -H "Content-Type: application/json" \
   -d '{"college_id":"iitm","department_id":"cse"}'
+
+# The matching department at every college
+curl -b cookies.txt -X POST \
+  http://localhost:8000/scrape/ \
+  -H "Content-Type: application/json" \
+  -d '{"department_id":"cse"}'
 ```
 
 Each background task scrapes and validates its source, then replaces the
@@ -123,9 +130,11 @@ uses a delete-then-insert sequence instead. Use a replica set for atomic
 refreshes.
 
 The protected `DELETE /scrape/courses` endpoint permanently deletes courses
-from a college or from one department within a college. Provide `college_id`
-and optionally `department_id` in the JSON body. The response includes the
-number of deleted courses.
+using the same optional `college_id` and `department_id` filters as the scrape
+endpoint. Omit both IDs to delete all courses, pass only `college_id` to delete
+all courses for that college, pass only `department_id` to delete that
+department across colleges, or provide both IDs to delete one department at
+one college. The response includes the number of deleted courses.
 
 ## Course API
 

@@ -189,10 +189,12 @@ async def delete_course(
 
 async def delete_courses_by_source(
     database: AsyncDatabase,
-    college_id: str,
+    college_id: str | None = None,
     department_id: str | None = None,
 ) -> int:
-    filters: dict[str, str] = {"college_id": college_id}
+    filters: dict[str, str] = {}
+    if college_id is not None:
+        filters["college_id"] = college_id
     if department_id is not None:
         filters["department_id"] = department_id
 

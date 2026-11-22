@@ -121,7 +121,10 @@ async def delete_scraped_courses(
     matching_sources = [
         source
         for source in sources
-        if source["college_id"] == request.college_id.lower()
+        if (
+            request.college_id is None
+            or source["college_id"] == request.college_id.lower()
+        )
         and (
             request.department_id is None
             or source["department_id"] == request.department_id.lower()
@@ -135,12 +138,20 @@ async def delete_scraped_courses(
         )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Unknown source: {source_name}",
+            detail=(
+                f"Unknown source: {source_name}"
+                if source_name
+                else "No scrape sources are currently registered"
+            ),
         )
 
     deleted_count = await delete_courses_by_source(
         database,
-        college_id=request.college_id.lower(),
+        college_id=(
+            request.college_id.lower()
+            if request.college_id is not None
+            else None
+        ),
         department_id=(
             request.department_id.lower() if request.department_id is not None else None
         ),
