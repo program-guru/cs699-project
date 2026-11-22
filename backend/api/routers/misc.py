@@ -81,7 +81,8 @@ async def _refresh_courses(
         scraper.close()
 
 
-@router.post("/", response_model=DTO[None], status_code=status.HTTP_202_ACCEPTED)
+
+@router.post("/scrape", response_model=DTO[None], status_code=status.HTTP_202_ACCEPTED)
 async def scrape_courses(
     scrapeRequest: ScrapeRequest,
     database: DBSession,

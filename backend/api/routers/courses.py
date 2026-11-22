@@ -148,7 +148,7 @@ async def delete_course_record(
 
 
 @router.delete("/", response_model=DTO[None])
-async def delete_scraped_courses(
+async def delete_course_records(
     request: DeleteCoursesRequest,
     database: DBSession,
     _: CurrentAdmin,
