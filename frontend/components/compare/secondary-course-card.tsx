@@ -131,7 +131,9 @@ export function SecondaryCourseCard({
                 variant="outline"
               >
                 <ItemContent>
-                  <ItemTitle>{similarCourse.title}</ItemTitle>
+                  <ItemTitle className="w-full text-left">
+                    {similarCourse.title}
+                  </ItemTitle>
                   <ItemDescription>
                     {similarCourse.department_name} ·{" "}
                     {similarCourse.course_code ?? "No course code"}
