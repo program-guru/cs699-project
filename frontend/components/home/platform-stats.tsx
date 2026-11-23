@@ -1,48 +1,30 @@
+"use client"
+
 import { DataCard } from "@/components/home/number-card"
-import type { CourseStatsResponse } from "@/types/course"
-import type { ExamListResponse } from "@/types/exam"
+import { PlatformStatsSkeleton } from "@/components/home/platform-stats-skeleton"
+import { useGetExamsQuery } from "@/lib/features/exams/exams.api"
+import { useGetPlatformStatsQuery } from "@/lib/features/misc/misc.api"
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
+export function PlatformStats() {
+  const {
+    data: statsResponse,
+    isLoading: isLoadingStats,
+  } = useGetPlatformStatsQuery()
+  const {
+    data: examsResponse,
+    isLoading: isLoadingExams,
+  } = useGetExamsQuery()
 
-async function getPlatformStats(): Promise<NonNullable<CourseStatsResponse["data"]>> {
-  const response = await fetch(`${apiUrl}/misc/stats`, {
-    next: { revalidate: 60 },
-  })
-
-  if (!response.ok) {
-    throw new Error(`Unable to load platform statistics (${response.status})`)
+  if (isLoadingStats || isLoadingExams) {
+    return <PlatformStatsSkeleton />
   }
 
-  const payload: CourseStatsResponse = await response.json()
-  if (!payload.success || !payload.data) {
-    throw new Error(payload.message || "Unable to load platform statistics")
+  const stats = statsResponse?.data
+  const examCount = examsResponse?.data?.length ?? 0
+
+  if (!stats) {
+    return null
   }
-
-  return payload.data
-}
-
-async function getTrackedExamCount(): Promise<number> {
-  const response = await fetch(`${apiUrl}/exams/`, {
-    next: { revalidate: 60 },
-  })
-
-  if (!response.ok) {
-    throw new Error(`Unable to load tracked exams (${response.status})`)
-  }
-
-  const payload: ExamListResponse = await response.json()
-  if (!payload.success || !payload.data) {
-    throw new Error(payload.message || "Unable to load tracked exams")
-  }
-
-  return payload.data.length
-}
-
-export async function PlatformStats() {
-  const [stats, examCount] = await Promise.all([
-    getPlatformStats(),
-    getTrackedExamCount(),
-  ])
 
   return (
     <>

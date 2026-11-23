@@ -12,6 +12,9 @@ export const compareApi = baseApi.injectEndpoints({
         url: `/compare/${encodeURIComponent(courseId)}`,
         params: { cross_department: crossDepartment },
       }),
+      providesTags: (_result, _error, { courseId }) => [
+        { type: "Compare", id: `similar:${courseId}` },
+      ],
     }),
     getComparisonSummary: builder.query<
       ComparisonSummaryResponse,
@@ -19,6 +22,9 @@ export const compareApi = baseApi.injectEndpoints({
     >({
       query: ({ primaryCourseId, secondaryCourseId }) =>
         `/compare/${encodeURIComponent(primaryCourseId)}/${encodeURIComponent(secondaryCourseId)}`,
+      providesTags: (_result, _error, { primaryCourseId, secondaryCourseId }) => [
+        { type: "Compare", id: `${primaryCourseId}:${secondaryCourseId}` },
+      ],
     }),
   }),
 })

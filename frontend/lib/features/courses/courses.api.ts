@@ -36,7 +36,15 @@ export const coursesApi = baseApi.injectEndpoints({
         method: "POST",
         body: course,
       }),
-      invalidatesTags: [{ type: "Course", id: "LIST" }],
+      invalidatesTags: (_result, error) =>
+        error
+          ? []
+          : [
+              { type: "Course", id: "LIST" },
+              { type: "Course" },
+              { type: "Stats", id: "PLATFORM" },
+              { type: "Compare" },
+            ],
     }),
     updateCourse: builder.mutation<
       CourseMutationResponse,
@@ -47,20 +55,32 @@ export const coursesApi = baseApi.injectEndpoints({
         method: "PUT",
         body: course,
       }),
-      invalidatesTags: (result, error, { courseId }) => [
-        { type: "Course", id: courseId },
-        { type: "Course", id: "LIST" },
-      ],
+      invalidatesTags: (_result, error, { courseId }) =>
+        error
+          ? []
+          : [
+              { type: "Course", id: courseId },
+              { type: "Course", id: "LIST" },
+              { type: "Course" },
+              { type: "Stats", id: "PLATFORM" },
+              { type: "Compare" },
+            ],
     }),
     deleteCourse: builder.mutation<CourseMutationResponse, string>({
       query: (courseId) => ({
         url: `/courses/${encodeURIComponent(courseId)}`,
         method: "DELETE",
       }),
-      invalidatesTags: (result, error, courseId) => [
-        { type: "Course", id: courseId },
-        { type: "Course", id: "LIST" },
-      ],
+      invalidatesTags: (_result, error, courseId) =>
+        error
+          ? []
+          : [
+              { type: "Course", id: courseId },
+              { type: "Course", id: "LIST" },
+              { type: "Course" },
+              { type: "Stats", id: "PLATFORM" },
+              { type: "Compare" },
+            ],
     }),
     deleteCoursesBySource: builder.mutation<
       DeleteCoursesResponse,
@@ -71,7 +91,15 @@ export const coursesApi = baseApi.injectEndpoints({
         method: "DELETE",
         body: request,
       }),
-      invalidatesTags: [{ type: "Course", id: "LIST" }],
+      invalidatesTags: (_result, error) =>
+        error
+          ? []
+          : [
+              { type: "Course", id: "LIST" },
+              { type: "Course" },
+              { type: "Stats", id: "PLATFORM" },
+              { type: "Compare" },
+            ],
     }),
   }),
 })
