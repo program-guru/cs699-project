@@ -259,9 +259,7 @@ export function ExamTimeline({ examName, year }: ExamTimelineProps) {
                   <div className="min-w-0 py-6 pr-5 sm:pr-8">
                     <div className="flex flex-wrap items-center gap-2">
                       <h2
-                        className={`font-semibold ${
-                          isCompleted ? "text-primary" : "text-foreground"
-                        }`}
+                        className={"font-semibold text-foreground"}
                       >
                         {event.activity}
                       </h2>
