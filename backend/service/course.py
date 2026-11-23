@@ -1,3 +1,4 @@
+import asyncio
 import re
 from typing import Literal
 
@@ -61,7 +62,7 @@ async def update_course_embedding(
     if object_id is None:
         raise ValueError(f"Invalid course ID: {course_id}")
 
-    fields = embedding_fields(course)
+    fields = await asyncio.to_thread(embedding_fields, course)
     result = await database["courses"].update_one(
         {"_id": object_id},
         {"$set": fields},

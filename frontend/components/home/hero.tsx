@@ -70,10 +70,10 @@ export function Hero() {
 
         <Button
           nativeButton={false}
-          render={<Link href="/colleges" />}
+          render={<Link href="/courses" />}
           className="mt-2"
         >
-          Explore universities
+          Explore Courses
         </Button>
       </div>
 
