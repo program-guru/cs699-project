@@ -1,8 +1,6 @@
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
-
-from api.dependencies import CurrentAdmin, DBSession
 from models.catalog import College, Department
 from models.course import (
     Course,
@@ -20,6 +18,8 @@ from service.course import (
     update_course,
     update_course_embedding,
 )
+
+from api.dependencies import CurrentAdmin, DBSession
 
 router = APIRouter(prefix="/courses", tags=["courses"])
 
