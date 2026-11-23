@@ -31,9 +31,14 @@ export const examsApi = baseApi.injectEndpoints({
         method: "POST",
         ...(year ? { params: { year } } : {}),
       }),
-      invalidatesTags: (_result, _error, { exam, year }) => [
-        { type: "Exam", id: `${exam}:${year ?? "latest"}` },
-      ],
+      invalidatesTags: (_result, error, { exam, year }) =>
+        error
+          ? []
+          : [
+              { type: "Exam", id: "LIST" },
+              { type: "Exam", id: `${exam}:${year ?? "latest"}` },
+              { type: "Exam" },
+            ],
     }),
   }),
 })

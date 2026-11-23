@@ -38,6 +38,6 @@ const baseQuery: BaseQueryFn<
 export const baseApi = createApi({
   reducerPath: "api",
   baseQuery,
-  tagTypes: ["Admin", "Course", "Exam"],
+  tagTypes: ["Admin", "Course", "Exam", "Stats", "Compare"],
   endpoints: () => ({}),
 })

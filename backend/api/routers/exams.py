@@ -2,18 +2,18 @@ import asyncio
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
-from pymongo.asynchronous.database import AsyncDatabase
-from pymongo.errors import PyMongoError
-from requests import RequestException
-
-from api.dependencies import CurrentAdmin, DBSession
 from exam_scrapers.base_scraper import BaseExamScraper
 from exam_scrapers.registry import exam_registry
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 from models.catalog import Exam
 from models.dto import DTO
 from models.exam import ExamTimeline
+from pymongo.asynchronous.database import AsyncDatabase
+from pymongo.errors import PyMongoError
+from requests import RequestException
 from service.exam import get_exam_timeline, replace_exam_timeline
+
+from api.dependencies import CurrentAdmin, DBSession
 
 router = APIRouter(prefix="/exams", tags=["exams"])
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ async def _refresh_exam_timeline(
     database: AsyncDatabase,
 ) -> None:
     try:
-        records = scraper.scrape()
+        records = await asyncio.to_thread(scraper.scrape)
         await replace_exam_timeline(
             database,
             exam=scraper.exam_name,

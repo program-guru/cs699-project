@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Annotated
 
@@ -56,7 +57,7 @@ async def _refresh_courses(
     database: AsyncDatabase,
 ) -> None:
     try:
-        records = scraper.scrape()
+        records = await asyncio.to_thread(scraper.scrape)
         await replace_courses(
             database,
             college_name=scraper.college_name,

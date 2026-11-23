@@ -39,7 +39,10 @@ async def replace_courses(
     records: list[Course],
 ) :
     documents = [course.model_dump(mode="json") for course in records]
-    vectors = embed_texts([embedding_text(course) for course in records])
+    vectors = await asyncio.to_thread(
+        embed_texts,
+        [embedding_text(course) for course in records],
+    )
     for document, vector in zip(documents, vectors, strict=True):
         document["embedding"] = vector
         document["embedding_model"] = settings.EMBEDDING_MODEL
